@@ -76,7 +76,22 @@ def fileToString():
     with open("Home.html", "r") as f:
 		page = f.read()
 		return page
-
+		
+def selectResult(results):
+    while True:
+		for result in results:
+			print("%d) %s" % (results.index(result)+1, result.title))	
+		ans = raw_input("Select number (q - exit): ")
+		if ans == 'q':
+			break
+		try:
+		    ans = int(ans)
+		    if ans > 0 and ans <= len(results):
+			    index = ans - 1
+			    print("Selected: %s" % results[index].title)
+		except ValueError:
+			print("Wrong input")
+	    	
 
 #page = httpToString(DOMAIN)
 #stringToFile(page)
@@ -84,8 +99,7 @@ page = fileToString()
 #print(page)
 results = resultsParser(page)
 
-for result in results:
-	print("%d) %s" % (results.index(result)+1, result.title))
+selectResult(results)
 
 
 
