@@ -8,6 +8,10 @@ DOMAIN_NO_SUFFIX = "www.online-life."
 
 print("Online-life")
 
+class Result:
+	title = ""
+	href = ""
+
 def httpToString(url):
     response = urllib2.urlopen(DOMAIN)
     # TODO read one line at a time, or read bytes
@@ -27,6 +31,7 @@ def getHrefId(href):
 	
 	
 def resultsParser(page):
+	results = []
 	begin = "<div class=\"custom-poster\""
 	end = "</a>"
 	div_begin = page.find(begin)
@@ -44,18 +49,23 @@ def resultsParser(page):
 			
 			# convert from cp1251 to utf8
 			title = title.decode('cp1251')
-			print("Title: " + title)
+			#print("Title: " + title)
 			
 			href_begin = div.find("href=")
 			href_end = div.find(".html", href_begin+1)
 			if href_begin != -1 and href_end != -1:
 				href = div[href_begin+6: href_end]
-				id_str = getHrefId(href)
-				print("Id: ", id_str)
+                result = Result()
+                result.title = title
+                result.href = href
+                results.append(result) 
+                
 				#TODO: detect poster image
 		
 		div_begin = page.find(begin, div_end)
 		div_end = page.find(end, div_begin)
+	
+	return results	
 
 def stringToFile(page):
 	print("Saving...")
@@ -72,9 +82,10 @@ def fileToString():
 #stringToFile(page)
 page = fileToString()
 #print(page)
-resultsParser(page)
+results = resultsParser(page)
 
-#encoding = response.headers.get_content_charset('utf-8')
-#decoded_html = html_response.decode(encoding)
-#print(decoded_html)
+for result in results:
+	print("%d) %s" % (results.index(result)+1, result.title))
+
+
 
