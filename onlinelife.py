@@ -13,10 +13,27 @@ class Result:
 	href = ""
 
 def httpToString(url):
-    response = urllib2.urlopen(DOMAIN)
-    # TODO read one line at a time, or read bytes
-    html = response.read();
-    return html
+	try:
+	    response = urllib2.urlopen(DOMAIN)
+	    #TODO: parse one item at the time
+	    html = response.read()
+	    return html
+	except:
+		print("Network problem")
+		return ""
+    
+def resultHttpToString(result_id):
+    url = "http://dterod.com/js.php?id=" + result_id;
+    referer = "http://dterod.com/player.php?newsid=" + result_id;
+    headers = {'Referer': referer}
+    try:
+        req = urllib2.Request(url, None, headers)
+        response = urllib2.urlopen(req)
+        js = response.read()
+        js = js.decode('cp1251')
+        print("JS: " + js)
+    except:
+		print("Network problem")
     
 def getHrefId(href):
 	id_begin = href.find(DOMAIN_NO_SUFFIX)
@@ -49,7 +66,6 @@ def resultsParser(page):
 			
 			# convert from cp1251 to utf8
 			title = title.decode('cp1251')
-			#print("Title: " + title)
 			
 			href_begin = div.find("href=")
 			href_end = div.find(".html", href_begin+1)
@@ -77,6 +93,11 @@ def fileToString():
 		page = f.read()
 		return page
 		
+def processResult(result):
+	result_id = getHrefId(result.href)
+	resultHttpToString(result_id)
+	
+		
 def selectResult(results):
     while True:
 		for result in results:
@@ -89,6 +110,7 @@ def selectResult(results):
 		    if ans > 0 and ans <= len(results):
 			    index = ans - 1
 			    print("Selected: %s" % results[index].title)
+			    processResult(result)
 		except ValueError:
 			print("Wrong input")
 	    	
