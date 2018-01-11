@@ -35,6 +35,11 @@ def resultsParser(page):
 		title_begin = div.find("/>")
 		if title_begin != -1:
 			title = div[title_begin+2: div_end]
+			# Delete title new line
+			title_new_line = title.find('\n')
+			if title_new_line != -1:
+				title = title[:title_new_line]
+			
 			#TODO: convert from cp1251 to utf8
 			print("Title: " + title)
 			
