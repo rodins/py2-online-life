@@ -19,7 +19,7 @@ class PlayItem:
 
 def httpToString(url):
 	try:
-	    response = urllib2.urlopen(DOMAIN)
+	    response = urllib2.urlopen(url)
 	    #TODO: parse one item at the time
 	    html = response.read()
 	    return html
@@ -39,7 +39,44 @@ def resultHttpToString(result_id):
         return js
     except:
 		print("Network problem")
+		return ""
 		
+def playlistParser(json):
+	item_start = json.find("{")
+	item_end = json.find("}", item_start+1)
+	while item_start != -1 and item_end != -1:
+		item = json[item_start: item_end]
+		play_item = playItemParser(item)
+		print("\tComment: " + play_item.comment)
+		
+		item_start = json.find("{", item_end)
+		item_end = json.find("}", item_start)
+		
+def playlistsParser(json):
+	begin = "\"comment\""
+	end = "]"
+	playlist_begin = json.find(begin)
+	playlist_end = json.find(end, playlist_begin)
+	while playlist_begin != -1 and playlist_end != -1:
+		playlist = json[playlist_begin: playlist_end]
+		
+		comment_begin = playlist.find(begin)
+		comment_end = playlist.find("[", comment_begin+11)
+		if comment_begin != -1 and comment_end != -1:
+			comment = playlist[comment_begin+11: comment_end]
+			comment_new_end = comment.find("\",")
+			if comment_new_end != -1:
+				comment = playlist[comment_begin+11: comment_new_end]
+			print("Comment: " + comment)
+			
+			items = playlist[comment_end+1:]
+			playlistParser(items)
+			
+		playlist_begin = json.find(begin, playlist_end+2)
+		playlist_end = json.find(end, playlist_begin+1)
+		 
+			
+
 def playlistLinkParser(js):
 	link_begin = js.find("pl:")
 	link_end = js.find("\"", link_begin+4)
@@ -47,7 +84,7 @@ def playlistLinkParser(js):
 		link = js[link_begin+4: link_end]
 		return link
 	return ""
-
+	
 def playItemParser(js):
 	play_item = PlayItem()
 	
@@ -136,6 +173,9 @@ def processResult(result):
 	playlist_link = playlistLinkParser(js)
 	if playlist_link != "":
 		print("Playlist link: " + playlist_link)
+		json = httpToString(playlist_link)
+		if json != "":
+			playlistsParser(json)
 	else:
 		# Probing for play item
 		play_item = playItemParser(js)
