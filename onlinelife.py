@@ -39,6 +39,14 @@ def resultHttpToString(result_id):
         return js
     except:
 		print("Network problem")
+		
+def playlistLinkParser(js):
+	link_begin = js.find("pl:")
+	link_end = js.find("\"", link_begin+4)
+	if link_begin != -1 and link_end != -1:
+		link = js[link_begin+4: link_end]
+		return link
+	return ""
 
 def playItemParser(js):
 	play_item = PlayItem()
@@ -126,6 +134,8 @@ def processResult(result):
 	js = resultHttpToString(result_id)
 	play_item = playItemParser(js)
 	print("Comment: " + play_item.comment)
+	playlist_link = playlistLinkParser(js)
+	print("Playlist link: " + playlist_link)
 	
 		
 def selectResult(results):
