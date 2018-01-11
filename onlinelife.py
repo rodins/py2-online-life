@@ -132,10 +132,23 @@ def fileToString():
 def processResult(result):
 	result_id = getHrefId(result.href)
 	js = resultHttpToString(result_id)
-	play_item = playItemParser(js)
-	print("Comment: " + play_item.comment)
+	# Probing for playlist link
 	playlist_link = playlistLinkParser(js)
-	print("Playlist link: " + playlist_link)
+	if playlist_link != "":
+		print("Playlist link: " + playlist_link)
+	else:
+		# Probing for play item
+		play_item = playItemParser(js)
+		if play_item.file != "":
+			print(play_item.comment)
+			print("Play and download links found")
+			print(play_item.file)
+			print(play_item.download)
+			# TODO: trailers detection
+			# TODO: start mplayer of wget
+		else:
+			print("Nothing found")
+	raw_input("Press ENTER to continue...")
 	
 		
 def selectResult(results):
