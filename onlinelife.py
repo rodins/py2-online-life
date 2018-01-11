@@ -1,6 +1,7 @@
 import urllib2
 
 DOMAIN = "http://online-life.club"
+DOMAIN_NO_SUFFIX = "www.online-life."
 
 print("Online-life")
 
@@ -9,6 +10,19 @@ def httpToString(url):
     # TODO read one line at a time, or read bytes
     html = response.read();
     return html
+    
+def getHrefId(href):
+	id_begin = href.find(DOMAIN_NO_SUFFIX)
+	# id_begin detection make suffix independent
+	if id_begin != -1:
+		id_begin = href.find("/", id_begin+1)
+		
+	id_end = href.find("-", id_begin)
+	if id_begin != -1 and id_end != -1:
+		id_str = href[id_begin+1: id_end]
+		print("Id: " + id_str)
+	
+		
     
 def resultsParser(page):
 	begin = "<div class=\"custom-poster\""
@@ -29,6 +43,7 @@ def resultsParser(page):
 			if href_begin != -1 and href_end != -1:
 				href = div[href_begin: href_end]
 				print("Href: " + href)
+				getHrefId(href)
 				#TODO: detect poster image
 		
 		div_begin = page.find(begin, div_end)
