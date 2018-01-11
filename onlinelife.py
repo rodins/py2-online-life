@@ -11,6 +11,11 @@ print("Online-life")
 class Result:
 	title = ""
 	href = ""
+	
+class PlayItem:
+	comment = ""
+	file = ""
+	download = ""
 
 def httpToString(url):
 	try:
@@ -31,9 +36,32 @@ def resultHttpToString(result_id):
         response = urllib2.urlopen(req)
         js = response.read()
         js = js.decode('cp1251')
-        print("JS: " + js)
+        return js
     except:
 		print("Network problem")
+
+def playItemParser(js):
+	play_item = PlayItem()
+	
+	# Search for file
+	file_begin = js.find("\"file\"")
+	file_end = js.find("\"", file_begin+10)
+	if file_begin != -1 and file_end != -1:
+		play_item.file = js[file_begin+8: file_end]
+	
+	# Search for download
+	download_begin = js.find("\"download\"")
+	download_end = js.find("\"", download_begin+12)
+	if download_begin != -1 and download_end != -1:
+		play_item.download = js[download_begin+12: download_end]
+		
+	# Search for comment
+	comment_begin = js.find("\"comment\"")
+	comment_end = js.find("\"", comment_begin+11)
+	if comment_begin != -1 and comment_end != -1:
+		play_item.comment = js[comment_begin+11: comment_end]
+		
+	return play_item	
     
 def getHrefId(href):
 	id_begin = href.find(DOMAIN_NO_SUFFIX)
@@ -95,7 +123,9 @@ def fileToString():
 		
 def processResult(result):
 	result_id = getHrefId(result.href)
-	resultHttpToString(result_id)
+	js = resultHttpToString(result_id)
+	play_item = playItemParser(js)
+	print("Comment: " + play_item.comment)
 	
 		
 def selectResult(results):
@@ -110,7 +140,7 @@ def selectResult(results):
 		    if ans > 0 and ans <= len(results):
 			    index = ans - 1
 			    print("Selected: %s" % results[index].title)
-			    processResult(result)
+			    processResult(results[index])
 		except ValueError:
 			print("Wrong input")
 	    	
