@@ -23,10 +23,9 @@ def getHrefId(href):
 	id_end = href.find("-", id_begin)
 	if id_begin != -1 and id_end != -1:
 		id_str = href[id_begin+1: id_end]
-		print("Id: " + id_str)
+		return id_str
 	
-		
-    
+	
 def resultsParser(page):
 	begin = "<div class=\"custom-poster\""
 	end = "</a>"
@@ -51,8 +50,8 @@ def resultsParser(page):
 			href_end = div.find(".html", href_begin+1)
 			if href_begin != -1 and href_end != -1:
 				href = div[href_begin+6: href_end]
-				print("Href: " + href)
-				getHrefId(href)
+				id_str = getHrefId(href)
+				print("Id: ", id_str)
 				#TODO: detect poster image
 		
 		div_begin = page.find(begin, div_end)
