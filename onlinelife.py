@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 import urllib2
 
 DOMAIN = "http://online-life.club"
@@ -40,13 +43,14 @@ def resultsParser(page):
 			if title_new_line != -1:
 				title = title[:title_new_line]
 			
-			#TODO: convert from cp1251 to utf8
+			# convert from cp1251 to utf8
+			title = title.decode('cp1251')
 			print("Title: " + title)
 			
 			href_begin = div.find("href=")
 			href_end = div.find(".html", href_begin+1)
 			if href_begin != -1 and href_end != -1:
-				href = div[href_begin: href_end]
+				href = div[href_begin+4: href_end]
 				print("Href: " + href)
 				getHrefId(href)
 				#TODO: detect poster image
