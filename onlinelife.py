@@ -16,6 +16,10 @@ class PlayItem:
 	comment = ""
 	file = ""
 	download = ""
+	
+class Playlist:
+	comment = ""
+	items = []
 
 def httpToString(url):
 	try:
@@ -42,17 +46,20 @@ def resultHttpToString(result_id):
 		return ""
 		
 def playlistParser(json):
+	items = []
 	item_start = json.find("{")
 	item_end = json.find("}", item_start+1)
 	while item_start != -1 and item_end != -1:
 		item = json[item_start: item_end]
 		play_item = playItemParser(item)
-		print("\tComment: " + play_item.comment)
+		items.append(play_item)
 		
 		item_start = json.find("{", item_end)
 		item_end = json.find("}", item_start)
+	return items
 		
 def playlistsParser(json):
+	playlists = []
 	begin = "\"comment\""
 	end = "]"
 	playlist_begin = json.find(begin)
@@ -67,15 +74,19 @@ def playlistsParser(json):
 			comment_new_end = comment.find("\",")
 			if comment_new_end != -1:
 				comment = playlist[comment_begin+11: comment_new_end]
-			print("Comment: " + comment)
-			
-			items = playlist[comment_end+1:]
-			playlistParser(items)
+	
+			items = playlist[comment_end+1:]		
+			playlist = Playlist()
+			playlist.comment = comment
+			playlist.items = playlistParser(items)
+			if comment != "":
+				playlists.append(playlist)
+			else:
+				return playlist.items
 			
 		playlist_begin = json.find(begin, playlist_end+2)
 		playlist_end = json.find(end, playlist_begin+1)
-		 
-			
+	return playlists
 
 def playlistLinkParser(js):
 	link_begin = js.find("pl:")
@@ -166,31 +177,68 @@ def fileToString():
 		page = f.read()
 		return page
 		
+def processPlayItem(play_item):
+	print(play_item.comment)
+	print("Play and download links found")
+	print(play_item.file)
+	print(play_item.download)
+	
+	# TODO: start mplayer of wget
+	raw_input("Press ENTER to continue...")
+		
 def processResult(result):
 	result_id = getHrefId(result.href)
 	js = resultHttpToString(result_id)
 	# Probing for playlist link
 	playlist_link = playlistLinkParser(js)
 	if playlist_link != "":
-		print("Playlist link: " + playlist_link)
 		json = httpToString(playlist_link)
 		if json != "":
-			playlistsParser(json)
+			playlists = playlistsParser(json)
+			if len(playlists) > 0:
+				selectPlaylists(playlists)
+			else:
+				items = playlistParser(json)
+				selectPlaylist(items)
 	else:
 		# Probing for play item
 		play_item = playItemParser(js)
 		if play_item.file != "":
-			print(play_item.comment)
-			print("Play and download links found")
-			print(play_item.file)
-			print(play_item.download)
-			# TODO: trailers detection
-			# TODO: start mplayer of wget
+			processPlayItem(play_item)
 		else:
+			# TODO: trailers detection
 			print("Nothing found")
-	raw_input("Press ENTER to continue...")
 	
-		
+def selectPlaylist(items):
+	while True:
+		for play_item in items:
+			print("%d) %s" % (items.index(play_item)+1, play_item.comment))
+		ans = raw_input("Select item (q - quit): ")
+		if ans == "q":
+			return
+		try:
+			index = int(ans)
+			if index > 0 and index <= len(items):
+				processPlayItem(items[index-1])
+		except:
+			print("Wrong playlist input")
+	
+def selectPlaylists(playlists):
+	while True:
+		for playlist in playlists:
+			print("%d) %s" % (playlists.index(playlist)+1, playlist.comment))
+		ans = raw_input("Select item (q - quit): ")
+		if ans == "q":
+			return
+		try:
+			print("ans: " + ans)
+			index = int(ans)
+			print("index", index)
+			if index > 0 and index <= len(playlists):
+				selectPlaylist(playlists[index-1].items)
+		except Exception as ex:
+			print("Wrong playlists input", ex)
+				
 def selectResult(results):
     while True:
 		for result in results:
@@ -205,7 +253,7 @@ def selectResult(results):
 			    print("Selected: %s" % results[index].title)
 			    processResult(results[index])
 		except ValueError:
-			print("Wrong input")
+			print("Wrong results input")
 	    	
 
 #page = httpToString(DOMAIN)
