@@ -50,7 +50,7 @@ def resultsParser(page):
 			href_begin = div.find("href=")
 			href_end = div.find(".html", href_begin+1)
 			if href_begin != -1 and href_end != -1:
-				href = div[href_begin+4: href_end]
+				href = div[href_begin+6: href_end]
 				print("Href: " + href)
 				getHrefId(href)
 				#TODO: detect poster image
