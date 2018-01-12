@@ -20,6 +20,11 @@ class PlayItem:
 class Playlist:
 	comment = ""
 	items = []
+	
+class ResultInfo:
+	country = ""
+	year = ""
+	items = []
 
 def httpToString(url):
 	try:
@@ -43,6 +48,69 @@ def resultHttpToString(result_id):
         return js
     except:
 		print("Network problem")
+		return ""
+
+def infoHttpToString(url):
+	try:
+		response = urllib2.urlopen(url)
+		resultInfo = ResultInfo()
+		for line in response:
+			utf_line = line.decode('cp1251')
+			#print("LINE_START" + utf_line + "LINE_END")
+			if utf_line.find(u"Премьера в мире:") != -1:
+				return resultInfo
+			
+			if resultInfo.year == "":
+				resultInfo.year = parseSimpleInfo(utf_line, u"Год: ")
+			elif resultInfo.country == "":
+				resultInfo.country = parseSimpleInfo(utf_line, u"Страна: ")
+			elif len(resultInfo.items) == 0:
+				resultInfo.items = parseActors(utf_line, u"Режиссер:", u" (режиссер)")
+			else:
+				resultInfo.items += parseActors(utf_line, u"В ролях:")
+				
+	except Exception as ex:
+		print(ex)
+		
+def parseActors(line, query, director = ""):
+	items = []
+	actors_begin = line.find(query)
+	actors_end = line.find("\n")
+	if actors_begin != -1 and actors_end != -1:
+		actors = line[actors_begin: actors_end]
+		#print("Actors: " + actors)
+		
+		begin = "<a href"
+		end = "</a>"
+		anchor_begin = actors.find(begin)
+		anchor_end = actors.find(end)
+		while anchor_begin != -1 and anchor_end != -1:
+			item = Result()
+			anchor = actors[anchor_begin: anchor_end]
+			#print("Anchor: " + anchor)
+			
+			title_begin = anchor.find(">")
+			if title_begin != -1:
+				item.title = anchor[title_begin+1:] + director
+				#print("Title: " + item.title)
+				
+				href_begin = anchor.find("href=")
+				href_end = anchor.find(">", href_begin)
+				if href_begin != -1 and href_end != -1:
+					item.href = anchor[href_begin+6: href_end-1]
+					#print("Href: " + item.href)
+					items.append(item)
+			
+			anchor_begin = actors.find(begin, anchor_end)
+			anchor_end = actors.find(end, anchor_begin)
+	return items
+	
+def parseSimpleInfo(line, query):
+	info_begin = line.find(query)
+	info_end = line.find("\n", info_begin)
+	if info_begin != -1 and info_end != -1:
+		return line[info_begin: info_end]
+	else:
 		return ""
 		
 def playlistParser(json):
@@ -154,7 +222,7 @@ def resultsParser(page):
 			href_begin = div.find("href=")
 			href_end = div.find(".html", href_begin+1)
 			if href_begin != -1 and href_end != -1:
-				href = div[href_begin+6: href_end]
+				href = div[href_begin+6: href_end+5]
                 result = Result()
                 result.title = title
                 result.href = href
@@ -186,7 +254,7 @@ def processPlayItem(play_item):
 	# TODO: start mplayer of wget
 	raw_input("Press ENTER to continue...")
 		
-def processResult(result):
+def processLinks(result):
 	result_id = getHrefId(result.href)
 	js = resultHttpToString(result_id)
 	# Probing for playlist link
@@ -208,6 +276,15 @@ def processResult(result):
 		else:
 			# TODO: trailers detection
 			print("Nothing found")
+
+def processInfo(result):
+	resultInfo = infoHttpToString(result.href)
+	if resultInfo != None:
+		print(resultInfo.country)
+		print(resultInfo.year)
+		for item in resultInfo.items:
+			print(item.title)
+	raw_input("Press ENTER to continue...")
 	
 def selectPlaylist(items):
 	while True:
@@ -220,7 +297,7 @@ def selectPlaylist(items):
 			index = int(ans)
 			if index > 0 and index <= len(items):
 				processPlayItem(items[index-1])
-		except:
+		except ValueError:
 			print("Wrong playlist input")
 	
 def selectPlaylists(playlists):
@@ -251,9 +328,13 @@ def selectResult(results):
 		    if ans > 0 and ans <= len(results):
 			    index = ans - 1
 			    print("Selected: %s" % results[index].title)
-			    processResult(results[index])
-		except ValueError:
-			print("Wrong results input")
+			    ans = raw_input("Select mode (l - links, i - info): ")
+			    if ans == "i":
+					processInfo(results[index])
+			    if ans == "l":
+					processLinks(results[index])
+		except ValueError as ex:
+			print("Wrong results input", ex)
 	    	
 
 #page = httpToString(DOMAIN)
