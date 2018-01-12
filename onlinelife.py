@@ -285,6 +285,11 @@ def processInfo(result):
 		selectActor(resultInfo)
 	raw_input("Press ENTER to continue...")
 	
+def processActorOrCategory(href):
+	page = httpToString(href)
+	results = resultsParser(page)
+	selectResult(results)
+	
 def selectActor(resultInfo):
 	while True:
 		print(resultInfo.title)
@@ -299,10 +304,10 @@ def selectActor(resultInfo):
 		try:
 			index = int(ans) - 1
 			if index >= 0 and index < len(resultInfo.items):
-				print("processActor: " + resultInfo.items[index].title)
-				#TODO processActor(items[index])
-		except:
-			print("Wrong input")
+				print("Processing actor: " + resultInfo.items[index].title)
+				processActorOrCategory(resultInfo.items[index].href)
+		except Exception as ex:
+			print("Wrong input", ex)
 		
 def selectPlaylist(items):
 	while True:
