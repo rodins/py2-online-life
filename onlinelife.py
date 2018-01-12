@@ -22,6 +22,7 @@ class Playlist:
 	items = []
 	
 class ResultInfo:
+	title = ""
 	country = ""
 	year = ""
 	items = []
@@ -280,12 +281,29 @@ def processLinks(result):
 def processInfo(result):
 	resultInfo = infoHttpToString(result.href)
 	if resultInfo != None:
-		print(resultInfo.country)
-		print(resultInfo.year)
-		for item in resultInfo.items:
-			print(item.title)
+		resultInfo.title = result.title
+		selectActor(resultInfo)
 	raw_input("Press ENTER to continue...")
 	
+def selectActor(resultInfo):
+	while True:
+		print(resultInfo.title)
+		print(resultInfo.country)
+		print(resultInfo.year)
+		print("Actors:")
+		for item in resultInfo.items:
+			print("%d) %s" % (resultInfo.items.index(item)+1, item.title))
+		ans = raw_input("Select item (q - exit): ")
+		if ans == "q":
+			return
+		try:
+			index = int(ans) - 1
+			if index >= 0 and index < len(resultInfo.items):
+				print("processActor: " + resultInfo.items[index].title)
+				#TODO processActor(items[index])
+		except:
+			print("Wrong input")
+		
 def selectPlaylist(items):
 	while True:
 		for play_item in items:
