@@ -52,14 +52,13 @@ def resultHttpToString(result_id):
 		return ""
 
 def infoHttpToString(url):
+	print("Getting info...")
 	try:
 		response = urllib2.urlopen(url)
 		resultInfo = ResultInfo()
 		for line in response:
 			utf_line = line.decode('cp1251')
 			#print("LINE_START" + utf_line + "LINE_END")
-			if utf_line.find(u"Премьера в мире:") != -1:
-				return resultInfo
 			
 			if resultInfo.year == "":
 				resultInfo.year = parseSimpleInfo(utf_line, u"Год: ")
@@ -68,10 +67,13 @@ def infoHttpToString(url):
 			elif len(resultInfo.items) == 0:
 				resultInfo.items = parseActors(utf_line, u"Режиссер:", u" (режиссер)")
 			else:
+				len_prev = len(resultInfo.items)
 				resultInfo.items += parseActors(utf_line, u"В ролях:")
+				if len_prev < len(resultInfo.items):
+					return resultInfo
 				
 	except Exception as ex:
-		print(ex)
+		print("Network problem", ex)
 		
 def parseActors(line, query, director = ""):
 	items = []
@@ -331,9 +333,7 @@ def selectPlaylists(playlists):
 		if ans == "q":
 			return
 		try:
-			print("ans: " + ans)
 			index = int(ans)
-			print("index", index)
 			if index > 0 and index <= len(playlists):
 				selectPlaylist(playlists[index-1].items)
 		except Exception as ex:
@@ -365,8 +365,4 @@ def selectResult(results):
 page = fileToString()
 #print(page)
 results = resultsParser(page)
-
 selectResult(results)
-
-
-
