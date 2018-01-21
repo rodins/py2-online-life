@@ -125,31 +125,44 @@ def categoriesToItems():
 	try:
 		begin_found = False
 		drop_found = False
-		is_first = False
+		is_drop_first = False
 		
 		items = []
 		
 		#response = urllib2.urlopen(DOMAIN)
-		#with open("Home.html", "r") as f:
+		
 		response = open("Home.html", "r")
 		
 		for line in response:
 			if line.find("<div class=\"nav\">") != -1:
 				begin_found = True
+				main = Category()
+				mainCategoryItem = Result()
+				mainCategoryItem.title = "Главная"
+				mainCategoryItem.href = DOMAIN
+				main.result = mainCategoryItem
 			
 			if begin_found:
+				# Find new, popular, best
+				pull_right_begin = line.find("li class=\"pull-right")
+				pull_right_end = line.find("</li>", pull_right_begin+1)
+				if pull_right_begin != -1 and pull_right_end != -1:
+				    pull_right = line[pull_right_begin: pull_right_end]
+				    print("Pull_right: " + pull_right)
+				    continue
+				
 				# Find drop item
 				if line.find("<li class=\"drop\">") != -1:
 					drop_found = True
-					is_first = True
+					is_drop_first = True
 					
 				if drop_found:
 					result = parseAnchor(line)
 					if result != None:
-						if is_first:
+						if is_drop_first:
 							categoryItem = result
 							results = []
-							is_first = False
+							is_drop_first = False
 						else:
 							results.append(result)	
 					
