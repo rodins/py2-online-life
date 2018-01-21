@@ -4,6 +4,7 @@
 import urllib2
 
 DOMAIN = "http://online-life.club"
+WDOMAIN = "http://www.online-life.club"
 DOMAIN_NO_SUFFIX = "www.online-life."
 
 print("Online-life")
@@ -26,6 +27,10 @@ class ResultInfo:
 	country = ""
 	year = ""
 	items = []
+	
+class Category:
+	result = None
+	results = []
 
 def httpToString(url):
 	try:
@@ -33,8 +38,8 @@ def httpToString(url):
 	    #TODO: parse one item at the time
 	    html = response.read()
 	    return html
-	except:
-		print("Network problem")
+	except Exception as ex:
+		print("Network problem", ex)
 		return ""
     
 def resultHttpToString(result_id):
@@ -115,6 +120,71 @@ def parseSimpleInfo(line, query):
 		return line[info_begin: info_end]
 	else:
 		return ""
+
+def categoriesToItems():
+	try:
+		begin_found = False
+		drop_found = False
+		is_first = False
+		
+		items = []
+		
+		#response = urllib2.urlopen(DOMAIN)
+		#with open("Home.html", "r") as f:
+		response = open("Home.html", "r")
+		
+		for line in response:
+			if line.find("<div class=\"nav\">") != -1:
+				begin_found = True
+			
+			if begin_found:
+				# Find drop item
+				if line.find("<li class=\"drop\">") != -1:
+					drop_found = True
+					is_first = True
+					
+				if drop_found:
+					result = parseAnchor(line)
+					if result != None:
+						if is_first:
+							categoryItem = result
+							results = []
+							is_first = False
+						else:
+							results.append(result)	
+					
+				if line.find("</ul>") != -1 and drop_found:
+					drop_found = False
+					category = Category()
+					category.result = categoryItem
+					category.results = results
+					items.append(category)
+								
+			if line.find("</div>") != -1 and begin_found:
+				begin_found = False
+				response.close()
+				return items
+				
+	except Exception as ex:
+		print("Network problem", ex)
+		
+def parseAnchor(line):
+	anchor_begin = line.find("<a href=")
+	anchor_end = line.find("</a>")
+	if anchor_begin != -1 and anchor_end != -1:
+		anchor = line[anchor_begin:anchor_end]
+		href_begin = anchor.find("\"")
+		href_end = anchor.find("\"", href_begin+1)
+		title_begin = anchor.find(">")
+		href = anchor[href_begin+1: href_end]
+		title = anchor[title_begin+1:]
+		result = Result()
+		result.title = title.decode('cp1251')
+		if href.find(WDOMAIN) != -1:
+			result.href = href
+		else:
+			result.href = WDOMAIN + href
+		return result
 		
 def playlistParser(json):
 	items = []
@@ -359,10 +429,52 @@ def selectResult(results):
 		except ValueError as ex:
 			print("Wrong results input", ex)
 	    	
+def selectSubcategory(items):
+	while True:
+		for result in items:
+			print("%d) %s" % (items.index(result)+1, result.title))
+		ans = raw_input("Select number (q - exit): ")
+		if ans == 'q':
+			break
+		try:
+			ans = int(ans)
+			if ans > 0 and ans <= len(items):
+				index = ans-1
+				print("Selected: " + items[index].title)
+				processActorOrCategory(items[index].href)
+		except ValueError as ex:
+			print("Wrong subcategory input", ex)
+			
+	    	
+def selectCategory(items):
+	while True:
+		for category in items:
+			print("%d) %s" % (items.index(category)+1, category.result.title))
+		ans = raw_input("Select number (q - exit): ")
+		if ans == 'q':
+			break
+		try:
+			ans = int(ans)
+			if ans > 0 and ans <= len(items):
+				index = ans-1
+				category = items[index]
+				print("Selected: " + category.result.title)
+				ans = raw_input("Select mode: r -results, s - subcategories, q - exit: ")
+				if ans == 'r':
+					processActorOrCategory(category.result.href)
+				elif ans == 's':
+					selectSubcategory(category.results)
+				elif ans == 'q':
+					break
+		except ValueError as ex:
+			print("Wrong categories input", ex)
+				
 
 #page = httpToString(DOMAIN)
 #stringToFile(page)
-page = fileToString()
+#page = fileToString()
 #print(page)
-results = resultsParser(page)
-selectResult(results)
+#results = resultsParser(page)
+#selectResult(results)
+items = categoriesToItems()
+selectCategory(items)
