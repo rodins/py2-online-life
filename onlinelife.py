@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import urllib
 import urllib2
 
 DOMAIN = "http://online-life.club"
@@ -491,7 +492,30 @@ def selectCategory(items):
 					break
 		except ValueError as ex:
 			print("Wrong categories input", ex)
-				
+
+def searchLoop():
+	categories = []
+	while True:
+		ans = raw_input("Enter search query (c - categories, q - exit): ")
+		if ans == 'c':
+			if len(categories) == 0:
+				categories = categoriesToItems()
+				selectCategory(categories)
+		elif ans == 'q':
+			break
+		else:
+			query = ans.strip()
+			cpQuery = query.decode('cp1251')
+			print("Query: " + cpQuery)
+			data = {}
+			data['do'] = 'search'
+			data['subaction'] = 'search'
+			data['mode'] = 'simple'
+			data['story'] = cpQuery
+			url_values = urllib.urlencode(data)
+			print(url_values)
+			search_url = DOMAIN + "?" + url_values
+			processActorOrCategory(search_url)				
 
 #page = httpToString(DOMAIN)
 #stringToFile(page)
@@ -499,5 +523,6 @@ def selectCategory(items):
 #print(page)
 #results = resultsParser(page)
 #selectResult(results)
-items = categoriesToItems()
-selectCategory(items)
+#items = categoriesToItems()
+#selectCategory(items)
+searchLoop()
