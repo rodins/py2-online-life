@@ -505,16 +505,16 @@ def searchLoop():
 			break
 		else:
 			query = ans.strip()
-			cpQuery = query.decode('cp1251')
-			print("Query: " + cpQuery)
+			str_query = u"пророк"
 			data = {}
 			data['do'] = 'search'
 			data['subaction'] = 'search'
 			data['mode'] = 'simple'
-			data['story'] = cpQuery
+			data['story'] = query.encode('cp1251')
 			url_values = urllib.urlencode(data)
-			print(url_values)
+			#print(url_values)
 			search_url = DOMAIN + "?" + url_values
+			print(search_url)
 			processActorOrCategory(search_url)				
 
 #page = httpToString(DOMAIN)
