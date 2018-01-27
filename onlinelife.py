@@ -502,7 +502,7 @@ def searchLoop():
 		if ans == 'c':
 			if len(categories) == 0:
 				categories = categoriesToItems()
-				selectCategory(categories)
+			selectCategory(categories)
 		elif ans == 'q':
 			break
 		else:
