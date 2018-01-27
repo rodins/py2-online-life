@@ -3,6 +3,7 @@
 
 import urllib
 import urllib2
+import sys
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -496,7 +497,7 @@ def selectCategory(items):
 def searchLoop():
 	categories = []
 	while True:
-		ans = raw_input("Enter search query (c - categories, q - exit): ")
+		ans = raw_input("Enter search query (c - categories, q - exit): ").decode(sys.stdin.encoding)
 		if ans == 'c':
 			if len(categories) == 0:
 				categories = categoriesToItems()
@@ -505,16 +506,13 @@ def searchLoop():
 			break
 		else:
 			query = ans.strip()
-			str_query = u"пророк"
 			data = {}
 			data['do'] = 'search'
 			data['subaction'] = 'search'
 			data['mode'] = 'simple'
 			data['story'] = query.encode('cp1251')
 			url_values = urllib.urlencode(data)
-			#print(url_values)
 			search_url = DOMAIN + "?" + url_values
-			print(search_url)
 			processActorOrCategory(search_url)				
 
 #page = httpToString(DOMAIN)
