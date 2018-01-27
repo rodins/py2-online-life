@@ -36,25 +36,27 @@ class Category:
 
 def httpToString(url):
 	try:
-	    response = urllib2.urlopen(url)
-	    #TODO: parse one item at the time
-	    html = response.read()
-	    return html
+		print("Please wait...")
+		response = urllib2.urlopen(url)
+		#TODO: parse one item at the time
+		html = response.read()
+		return html
 	except Exception as ex:
 		print("Network problem", ex)
 		return ""
     
 def resultHttpToString(result_id):
-    url = "http://dterod.com/js.php?id=" + result_id;
-    referer = "http://dterod.com/player.php?newsid=" + result_id;
-    headers = {'Referer': referer}
-    try:
-        req = urllib2.Request(url, None, headers)
-        response = urllib2.urlopen(req)
-        js = response.read()
-        js = js.decode('cp1251')
-        return js
-    except:
+	print("Please wait...")
+	url = "http://dterod.com/js.php?id=" + result_id
+	referer = "http://dterod.com/player.php?newsid=" + result_id
+	headers = {'Referer': referer}
+	try:
+		req = urllib2.Request(url, None, headers)
+		response = urllib2.urlopen(req)
+		js = response.read()
+		js = js.decode('cp1251')
+		return js
+	except:
 		print("Network problem")
 		return ""
 
@@ -130,7 +132,7 @@ def categoriesToItems():
 		is_drop_first = False
 		
 		items = []
-		
+		print("Getting categories...")
 		response = urllib2.urlopen(DOMAIN)
 		
 		#response = open("Home.html", "r")
