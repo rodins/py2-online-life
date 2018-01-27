@@ -507,14 +507,15 @@ def searchLoop():
 			break
 		else:
 			query = ans.strip()
-			data = {}
-			data['do'] = 'search'
-			data['subaction'] = 'search'
-			data['mode'] = 'simple'
-			data['story'] = query.encode('cp1251')
-			url_values = urllib.urlencode(data)
-			search_url = DOMAIN + "?" + url_values
-			processActorOrCategory(search_url)				
+			if query != "":
+				data = {}
+				data['do'] = 'search'
+				data['subaction'] = 'search'
+				data['mode'] = 'simple'
+				data['story'] = query.encode('cp1251')
+				url_values = urllib.urlencode(data)
+				search_url = DOMAIN + "?" + url_values
+				processActorOrCategory(search_url)				
 
 #page = httpToString(DOMAIN)
 #stringToFile(page)
