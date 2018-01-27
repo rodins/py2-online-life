@@ -53,8 +53,7 @@ def resultHttpToString(result_id):
 	try:
 		req = urllib2.Request(url, None, headers)
 		response = urllib2.urlopen(req)
-		js = response.read()
-		js = js.decode('cp1251')
+		js = response.read().decode('cp1251')
 		return js
 	except:
 		print("Network problem")
