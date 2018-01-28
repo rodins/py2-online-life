@@ -123,6 +123,61 @@ def parseSimpleInfo(line, query):
 		return line[info_begin: info_end]
 	else:
 		return ""
+		
+def resultsToItems(url):
+	results = []
+	try:
+		poster_found = False
+		poster = ""
+		count = 1
+		
+		print("Getting results...")
+		response = urllib2.urlopen(url)
+		
+		for line in response:
+		    poster_begin = line.find("<div class=\"custom-poster\"")
+		    poster_end = line.find("</a>")
+		    
+		    if poster_begin != -1:
+				poster_found = True
+		    
+		    elif poster_end != -1 and poster_found:
+				poster_found = False
+				poster_end_str = line[:poster_end].strip()
+				if len(poster_end_str) > 0:
+					poster += poster_end_str
+				title_begin = poster.find("/>")
+				if title_begin != -1:
+					title = poster[title_begin+2:].decode('cp1251')
+					# Delete title new line
+					title_new_line = title.find('\n')
+					if title_new_line != -1:
+						title = title[:title_new_line]
+					print("%d) %s" % (count, title))
+					count += 1
+					
+					href_begin = poster.find("href=")
+					href_end = poster.find(".html", href_begin+1)
+					
+					if href_begin != -1 and href_end != -1:
+						href = poster[href_begin+6: href_end+5]
+		                result = Result()
+		                result.title = title
+		                result.href = href
+		                results.append(result) 
+		                
+						#TODO: detect poster image
+				poster = ""
+		    elif poster_found:
+				if poster == "":
+					poster = line
+				else:
+					poster += line
+		    
+	except Exception as ex:
+		print("Network problem", ex)
+	return results
+	
 
 def categoriesToItems():
 	try:
@@ -297,43 +352,6 @@ def getHrefId(href):
 		id_str = href[id_begin+1: id_end]
 		return id_str
 	
-	
-def resultsParser(page):
-	results = []
-	begin = "<div class=\"custom-poster\""
-	end = "</a>"
-	div_begin = page.find(begin)
-	div_end = page.find(end, div_begin)
-	while div_begin != -1 and div_end != -1:
-		div = page[div_begin: div_end]
-		
-		title_begin = div.find("/>")
-		if title_begin != -1:
-			title = div[title_begin+2: div_end]
-			# Delete title new line
-			title_new_line = title.find('\n')
-			if title_new_line != -1:
-				title = title[:title_new_line]
-			
-			# convert from cp1251 to utf8
-			title = title.decode('cp1251')
-			
-			href_begin = div.find("href=")
-			href_end = div.find(".html", href_begin+1)
-			if href_begin != -1 and href_end != -1:
-				href = div[href_begin+6: href_end+5]
-                result = Result()
-                result.title = title
-                result.href = href
-                results.append(result) 
-                
-				#TODO: detect poster image
-		
-		div_begin = page.find(begin, div_end)
-		div_end = page.find(end, div_begin)
-	
-	return results	
-
 def stringToFile(page):
 	print("Saving...")
 	with open("Home.html", "w") as f:
@@ -384,8 +402,7 @@ def processInfo(result):
 	raw_input("Press ENTER to continue...")
 	
 def processActorOrCategory(href):
-	page = httpToString(href)
-	results = resultsParser(page)
+	results = resultsToItems(href)
 	selectResult(results)
 	
 def selectActor(resultInfo):
@@ -436,9 +453,12 @@ def selectPlaylists(playlists):
 			print("Wrong playlists input", ex)
 				
 def selectResult(results):
-    while True:
-		for result in results:
-			print("%d) %s" % (results.index(result)+1, result.title))	
+	display = False # First time items displayed while fetching from the net
+	while True:
+		if display: 
+			for result in results:
+				print("%d) %s" % (results.index(result)+1, result.title))
+		display = True	
 		ans = raw_input("Select number (q - exit): ")
 		if ans == 'q':
 			break
