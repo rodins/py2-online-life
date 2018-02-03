@@ -15,6 +15,11 @@ class Result:
 	title = ""
 	href = ""
 	
+class Results:
+	items = []
+	prev_page = ""
+	next_page = ""
+	
 class PlayItem:
 	comment = ""
 	file = ""
@@ -124,8 +129,42 @@ def parseSimpleInfo(line, query):
 	else:
 		return ""
 		
-def resultsToItems(url):
-	results = []
+def parse_pager_href(anchor):
+	href_begin = anchor.find("href=\"")
+	href_end = anchor.find("\"", href_begin+6)
+	if href_begin != -1 and href_end != -1:
+		href = anchor[href_begin+6: href_end]
+		if href == "#":
+			list_submit_begin = anchor.find("list_submit(")
+			list_submit_end = anchor.find(")", list_submit_begin)
+			if list_submit_begin != -1 and list_submit_end != -1:
+				return anchor[list_submit_begin+12: list_submit_end]
+		else:
+			return href
+				
+def parse_pager(pager):
+	prev_page = ""
+	next_page = ""
+	
+	anchor_begin = pager.find("<a")
+	anchor_end = pager.find("</a>", anchor_begin+1)
+	while anchor_begin != -1 and anchor_end != -1:
+		anchor = pager[anchor_begin: anchor_end]
+		
+		title_begin = anchor.find(">")
+		title = anchor[title_begin+1:].decode('cp1251')
+		if title == u"Вперед":
+			next_page = parse_pager_href(anchor)
+		elif title == u"Назад":
+			prev_page = parse_pager_href(anchor)
+		
+		anchor_begin = pager.find("<a", anchor_end)
+		anchor_end = pager.find("</a>", anchor_begin)
+		
+	return (prev_page, next_page)
+		
+def resultsToItems(url, page = None):
+	results = Results()
 	try:
 		poster_found = False
 		poster = ""
@@ -138,9 +177,17 @@ def resultsToItems(url):
 		    poster_begin = line.find("<div class=\"custom-poster\"")
 		    poster_end = line.find("</a>")
 		    
+		    pager_begin = line.find("class=\"navigation\"")
+		    if pager_begin != -1 and not poster_found:
+				pager = line[pager_begin:]
+				prev_page, next_page = parse_pager(pager)
+				print("Prev. page: " + prev_page)
+				print("Next page: " + next_page)
+				results.prev_page = prev_page
+				results.next_page = next_page
+		    
 		    if poster_begin != -1:
 				poster_found = True
-		    
 		    elif poster_end != -1 and poster_found:
 				poster_found = False
 				poster_end_str = line[:poster_end].strip()
@@ -164,7 +211,7 @@ def resultsToItems(url):
 		                result = Result()
 		                result.title = title
 		                result.href = href
-		                results.append(result) 
+		                results.items.append(result) 
 		                
 						#TODO: detect poster image
 				poster = ""
@@ -453,15 +500,29 @@ def selectPlaylists(playlists):
 			print("Wrong playlists input", ex)
 				
 def selectResult(results):
+	str_prev = ""
+	str_next = ""
 	display = False # First time items displayed while fetching from the net
 	while True:
 		if display: 
-			for result in results:
-				print("%d) %s" % (results.index(result)+1, result.title))
-		display = True	
-		ans = raw_input("Select number (q - exit): ")
+			for result in results.items:
+				print("%d) %s" % (results.items.index(result)+1, result.title))
+		display = True
+		if results.prev_page != "":
+			str_prev = "p - prev, "
+		if results.next_page != "":
+			str_next = "n - next, "	
+		ans = raw_input("Select number (" + str_prev + str_next + "q - exit): ")
 		if ans == 'q':
 			break
+		elif ans == "p":
+			print("Moving to prev page: " + results.prev_page)
+			results = resultsToItems(results.prev_page)
+			continue
+		elif ans == "n":
+			print("Moving to next page: " + results.next_page)
+			results = resultsToItems(results.next_page)
+			continue
 		try:
 		    ans = int(ans)
 		    if ans > 0 and ans <= len(results):
