@@ -158,7 +158,7 @@ def parse_pager(pager):
 		
 	return (prev_page, next_page)
 		
-def resultsToItems(url):
+def resultsToItems(url, base_search_url = ""):
 	results = []
 	prev_page = ""
 	next_page = ""
@@ -180,7 +180,7 @@ def resultsToItems(url):
 				prev_page, next_page = parse_pager(pager)
 				print("Prev. page: " + prev_page)
 				print("Next page: " + next_page)
-				return (results, prev_page, next_page)
+				return (results, prev_page, next_page, base_search_url)
 		    
 		    if poster_begin != -1:
 				poster_found = True
@@ -444,8 +444,12 @@ def processInfo(result):
 	raw_input("Press ENTER to continue...")
 	
 def processActorOrCategory(href):
-	results, prev_page, next_page = resultsToItems(href)
-	selectResult(results, prev_page, next_page)
+	args = resultsToItems(href)
+	selectResult(args)
+	
+def processSearch(href):
+	args = resultsToItems(href, href) # second href as base url for search
+	selectResult(args)
 	
 def selectActor(resultInfo):
 	while True:
@@ -494,7 +498,7 @@ def selectPlaylists(playlists):
 		except Exception as ex:
 			print("Wrong playlists input", ex)
 				
-def selectResult(results, prev_page, next_page):
+def selectResult(results, prev_page, next_page, base_search_url):
 	display = False # First time items displayed while fetching from the net
 	while True:
 		str_prev = ""
@@ -512,12 +516,12 @@ def selectResult(results, prev_page, next_page):
 			break
 		elif ans == "p" and str_prev != "":
 			print("Moving to prev page: " + prev_page)
-			results, prev_page, next_page = resultsToItems(prev_page)
+			results, prev_page, next_page = resultsToItems(prev_page, base_search_url)
 			display = False
 			continue
 		elif ans == "n" and str_next != "":
 			print("Moving to next page: " + next_page)
-			results, prev_page, next_page = resultsToItems(next_page)
+			results, prev_page, next_page = resultsToItems(next_page, base_search_url)
 			display = False
 			continue
 		try:
@@ -593,7 +597,7 @@ def searchLoop():
 				data['story'] = query.encode('cp1251')
 				url_values = urllib.urlencode(data)
 				search_url = DOMAIN + "?" + url_values
-				processActorOrCategory(search_url)				
+				processSearch(search_url)				
 
 #page = httpToString(DOMAIN)
 #stringToFile(page)
