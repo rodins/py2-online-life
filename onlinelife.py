@@ -607,12 +607,4 @@ def searchLoop():
 				search_url = DOMAIN + "?" + url_values
 				processSearch(search_url)				
 
-#page = httpToString(DOMAIN)
-#stringToFile(page)
-#page = fileToString()
-#print(page)
-#results = resultsParser(page)
-#selectResult(results)
-#items = categoriesToItems()
-#selectCategory(items)
 searchLoop()
