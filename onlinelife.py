@@ -4,6 +4,7 @@
 import urllib
 import urllib2
 import sys
+from subprocess import call
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -406,8 +407,13 @@ def processPlayItem(play_item):
 	print(play_item.file)
 	print(play_item.download)
 	
-	# TODO: start mplayer of wget
-	raw_input("Press ENTER to continue...")
+	ans = raw_input("Do you want to play or download file (p - play, d - download, q - return): ")
+	if ans == "p" and play_item.file != "":
+		call(["mpv", "--cache=1024", play_item.file])
+	elif ans == "d" and play_item.download != "":
+		call(["wget", "-c", play_item.download])
+	elif ans == "q":
+		return
 		
 def processLinks(result):
 	result_id = getHrefId(result.href)
