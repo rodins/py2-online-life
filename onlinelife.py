@@ -158,7 +158,7 @@ def parse_pager(pager):
 		
 	return (prev_page, next_page)
 		
-def resultsToItems(url, base_search_url = ""):
+def resultsToItems(url):
 	results = []
 	prev_page = ""
 	next_page = ""
@@ -178,9 +178,7 @@ def resultsToItems(url, base_search_url = ""):
 		    if pager_begin != -1 and not poster_found:
 				pager = line[pager_begin:]
 				prev_page, next_page = parse_pager(pager)
-				print("Prev. page: " + prev_page)
-				print("Next page: " + next_page)
-				return (results, prev_page, next_page, base_search_url)
+				return (results, prev_page, next_page)
 		    
 		    if poster_begin != -1:
 				poster_found = True
@@ -444,12 +442,12 @@ def processInfo(result):
 	raw_input("Press ENTER to continue...")
 	
 def processActorOrCategory(href):
-	args = resultsToItems(href)
-	selectResult(args)
+	results, prev_page, next_page = resultsToItems(href)
+	selectResult(results, prev_page, next_page)
 	
 def processSearch(href):
-	args = resultsToItems(href, href) # second href as base url for search
-	selectResult(args)
+	results, prev_page, next_page = resultsToItems(href) 
+	selectResult(results, prev_page, next_page, href) # href as base_search_url
 	
 def selectActor(resultInfo):
 	while True:
@@ -497,8 +495,15 @@ def selectPlaylists(playlists):
 				selectPlaylist(playlists[index-1].items)
 		except Exception as ex:
 			print("Wrong playlists input", ex)
+			
+			
+def create_search_link(page, base_search_url):
+	if base_search_url != "":
+		return base_search_url + "&search_start=" + page
+	else:
+		return page
 				
-def selectResult(results, prev_page, next_page, base_search_url):
+def selectResult(results, prev_page, next_page, base_search_url = ""):
 	display = False # First time items displayed while fetching from the net
 	while True:
 		str_prev = ""
@@ -515,13 +520,15 @@ def selectResult(results, prev_page, next_page, base_search_url):
 		if ans == 'q':
 			break
 		elif ans == "p" and str_prev != "":
-			print("Moving to prev page: " + prev_page)
-			results, prev_page, next_page = resultsToItems(prev_page, base_search_url)
+			prev_page = create_search_link(prev_page, base_search_url)
+			print("Moving to prev page...")
+			results, prev_page, next_page = resultsToItems(prev_page)
 			display = False
 			continue
 		elif ans == "n" and str_next != "":
-			print("Moving to next page: " + next_page)
-			results, prev_page, next_page = resultsToItems(next_page, base_search_url)
+			next_page = create_search_link(next_page, base_search_url)
+			print("Moving to next page...")
+			results, prev_page, next_page = resultsToItems(next_page)
 			display = False
 			continue
 		try:
