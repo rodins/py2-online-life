@@ -36,7 +36,7 @@ class Category:
 
 def httpToString(url):
 	try:
-		print("Please wait...")
+		print("Getting playlist...")
 		response = urllib2.urlopen(url)
 		#TODO: parse one item at the time
 		html = response.read()
@@ -46,7 +46,7 @@ def httpToString(url):
 		return ""
     
 def resultHttpToString(result_id):
-	print("Please wait...")
+	print("Getting links...")
 	url = "http://dterod.com/js.php?id=" + result_id
 	referer = "http://dterod.com/player.php?newsid=" + result_id
 	headers = {'Referer': referer}
@@ -66,8 +66,6 @@ def infoHttpToString(url):
 		resultInfo = ResultInfo()
 		for line in response:
 			utf_line = line.decode('cp1251')
-			#print("LINE_START" + utf_line + "LINE_END")
-			
 			if resultInfo.year == "":
 				resultInfo.year = parseSimpleInfo(utf_line, u"Год: ")
 			elif resultInfo.country == "":
@@ -328,16 +326,14 @@ def playlistsParser(json):
 	playlist_begin = json.find(begin)
 	playlist_end = json.find(end, playlist_begin)
 	while playlist_begin != -1 and playlist_end != -1:
-		playlist = json[playlist_begin: playlist_end]
-		
-		comment_begin = playlist.find(begin)
-		comment_end = playlist.find("[", comment_begin+11)
+		playlist = json[playlist_begin+10: playlist_end]
+		comment_begin = playlist.find("\"")
+		comment_end = playlist.find("\"", comment_begin+1)
 		if comment_begin != -1 and comment_end != -1:
-			comment = playlist[comment_begin+11: comment_end]
-			comment_new_end = comment.find("\",")
-			if comment_new_end != -1:
-				comment = playlist[comment_begin+11: comment_new_end]
-	
+			comment = playlist[comment_begin+1: comment_end]
+			if playlist.find("\"playlist\"") == -1:
+				comment = ""
+				comment_end = -1
 			items = playlist[comment_end+1:]		
 			playlist = Playlist()
 			playlist.comment = comment
@@ -345,7 +341,7 @@ def playlistsParser(json):
 			if comment != "":
 				playlists.append(playlist)
 			else:
-				return playlist.items
+				return playlists
 			
 		playlist_begin = json.find(begin, playlist_end+2)
 		playlist_end = json.find(end, playlist_begin+1)
@@ -473,7 +469,7 @@ def selectPlaylist(items):
 	while True:
 		for play_item in items:
 			print("%d) %s" % (items.index(play_item)+1, play_item.comment))
-		ans = raw_input("Select item (q - quit): ")
+		ans = raw_input("Select item (q - return): ")
 		if ans == "q":
 			return
 		try:
@@ -487,7 +483,7 @@ def selectPlaylists(playlists):
 	while True:
 		for playlist in playlists:
 			print("%d) %s" % (playlists.index(playlist)+1, playlist.comment))
-		ans = raw_input("Select item (q - quit): ")
+		ans = raw_input("Select item (q - return): ")
 		if ans == "q":
 			return
 		try:
