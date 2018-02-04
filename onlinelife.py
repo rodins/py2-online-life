@@ -15,11 +15,6 @@ class Result:
 	title = ""
 	href = ""
 	
-class Results:
-	items = []
-	prev_page = ""
-	next_page = ""
-	
 class PlayItem:
 	comment = ""
 	file = ""
@@ -163,8 +158,10 @@ def parse_pager(pager):
 		
 	return (prev_page, next_page)
 		
-def resultsToItems(url, page = None):
-	results = Results()
+def resultsToItems(url):
+	results = []
+	prev_page = ""
+	next_page = ""
 	try:
 		poster_found = False
 		poster = ""
@@ -183,8 +180,7 @@ def resultsToItems(url, page = None):
 				prev_page, next_page = parse_pager(pager)
 				print("Prev. page: " + prev_page)
 				print("Next page: " + next_page)
-				results.prev_page = prev_page
-				results.next_page = next_page
+				return (results, prev_page, next_page)
 		    
 		    if poster_begin != -1:
 				poster_found = True
@@ -211,7 +207,7 @@ def resultsToItems(url, page = None):
 		                result = Result()
 		                result.title = title
 		                result.href = href
-		                results.items.append(result) 
+		                results.append(result) 
 		                
 						#TODO: detect poster image
 				poster = ""
@@ -223,7 +219,6 @@ def resultsToItems(url, page = None):
 		    
 	except Exception as ex:
 		print("Network problem", ex)
-	return results
 	
 
 def categoriesToItems():
@@ -449,8 +444,8 @@ def processInfo(result):
 	raw_input("Press ENTER to continue...")
 	
 def processActorOrCategory(href):
-	results = resultsToItems(href)
-	selectResult(results)
+	results, prev_page, next_page = resultsToItems(href)
+	selectResult(results, prev_page, next_page)
 	
 def selectActor(resultInfo):
 	while True:
@@ -499,29 +494,31 @@ def selectPlaylists(playlists):
 		except Exception as ex:
 			print("Wrong playlists input", ex)
 				
-def selectResult(results):
-	str_prev = ""
-	str_next = ""
+def selectResult(results, prev_page, next_page):
 	display = False # First time items displayed while fetching from the net
 	while True:
+		str_prev = ""
+		str_next = ""
 		if display: 
-			for result in results.items:
-				print("%d) %s" % (results.items.index(result)+1, result.title))
+			for result in results:
+				print("%d) %s" % (results.index(result)+1, result.title))
 		display = True
-		if results.prev_page != "":
+		if prev_page != "":
 			str_prev = "p - prev, "
-		if results.next_page != "":
+		if next_page != "":
 			str_next = "n - next, "	
 		ans = raw_input("Select number (" + str_prev + str_next + "q - exit): ")
 		if ans == 'q':
 			break
-		elif ans == "p":
-			print("Moving to prev page: " + results.prev_page)
-			results = resultsToItems(results.prev_page)
+		elif ans == "p" and str_prev != "":
+			print("Moving to prev page: " + prev_page)
+			results, prev_page, next_page = resultsToItems(prev_page)
+			display = False
 			continue
-		elif ans == "n":
-			print("Moving to next page: " + results.next_page)
-			results = resultsToItems(results.next_page)
+		elif ans == "n" and str_next != "":
+			print("Moving to next page: " + next_page)
+			results, prev_page, next_page = resultsToItems(next_page)
+			display = False
 			continue
 		try:
 		    ans = int(ans)
