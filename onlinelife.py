@@ -313,7 +313,8 @@ def playlistParser(json):
 	while item_start != -1 and item_end != -1:
 		item = json[item_start: item_end]
 		play_item = playItemParser(item)
-		items.append(play_item)
+		if play_item.comment != "":
+			items.append(play_item)
 		
 		item_start = json.find("{", item_end)
 		item_end = json.find("}", item_start)
