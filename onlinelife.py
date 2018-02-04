@@ -458,7 +458,7 @@ def selectActor(resultInfo):
 		print("Actors:")
 		for item in resultInfo.items:
 			print("%d) %s" % (resultInfo.items.index(item)+1, item.title))
-		ans = raw_input("Select item (q - exit): ")
+		ans = raw_input("Select item (q -return): ")
 		if ans == "q":
 			return
 		try:
@@ -517,7 +517,7 @@ def selectResult(results, prev_page, next_page, base_search_url = ""):
 			str_prev = "p - prev, "
 		if next_page != "":
 			str_next = "n - next, "	
-		ans = raw_input("Select number (" + str_prev + str_next + "q - exit): ")
+		ans = raw_input("Select number (" + str_prev + str_next + "q - return): ")
 		if ans == 'q':
 			break
 		elif ans == "p" and str_prev != "":
@@ -549,7 +549,7 @@ def selectSubcategory(items):
 	while True:
 		for result in items:
 			print("%d) %s" % (items.index(result)+1, result.title))
-		ans = raw_input("Select number (q - exit): ")
+		ans = raw_input("Select number (q - return): ")
 		if ans == 'q':
 			break
 		try:
@@ -566,7 +566,7 @@ def selectCategory(items):
 	while True:
 		for category in items:
 			print("%d) %s" % (items.index(category)+1, category.result.title))
-		ans = raw_input("Select number (q - exit): ")
+		ans = raw_input("Select number (q - return): ")
 		if ans == 'q':
 			break
 		try:
@@ -575,7 +575,7 @@ def selectCategory(items):
 				index = ans-1
 				category = items[index]
 				print("Selected: " + category.result.title)
-				ans = raw_input("Select mode: r -results, s - subcategories, q - exit: ")
+				ans = raw_input("Select mode: r -results, s - subcategories, q - return: ")
 				if ans == 'r':
 					processActorOrCategory(category.result.href)
 				elif ans == 's':
