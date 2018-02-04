@@ -217,6 +217,7 @@ def resultsToItems(url):
 		    
 	except Exception as ex:
 		print("Network problem", ex)
+	return(results, "", "") 
 	
 
 def categoriesToItems():
