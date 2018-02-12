@@ -650,28 +650,33 @@ class OnlineLifeGui(gtk.Window):
 		btnSavedItems = gtk.ToolButton(bookmarkIcon)
 		btnSavedItems.set_tooltip_text("Show/hide bookmarks")
 		btnSavedItems.connect("clicked", self.btnSavedItemsClicked)
+		btnSavedItems.set_sensitive(False)
 		toolbar.insert(btnSavedItems, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
 		btnRefresh.set_tooltip_text("Update results")
 		btnRefresh.connect("clicked", self.btnRefreshClicked)
+		btnRefresh.set_sensitive(False)
 		toolbar.insert(btnRefresh, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
 		btnUp.set_tooltip_text("Move up")
 		btnUp.connect("clicked", self.btnUpClicked)
+		btnUp.set_sensitive(False)
 		toolbar.insert(btnUp, -1)
 		
 		btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
 		btnPrev.set_tooltip_text("Go back in history")
 		btnPrev.connect("clicked", self.btnPrevClicked)
+		btnPrev.set_sensitive(False)
 		toolbar.insert(btnPrev, -1)
 		
 		btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
 		btnNext.set_tooltip_text("Go forward in history")
 		btnNext.connect("clicked", self.btnNextClicked)
+		btnNext.set_sensitive(False)
 		toolbar.insert(btnNext, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
@@ -686,6 +691,7 @@ class OnlineLifeGui(gtk.Window):
 		btnActors = gtk.ToolButton(gtk.STOCK_INFO)
 		btnActors.set_tooltip_text("Show/hide info")
 		btnActors.connect("clicked", self.btnActorsClicked)
+		btnActors.set_sensitive(False)
 		toolbar.insert(btnActors, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
