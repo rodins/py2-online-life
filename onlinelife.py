@@ -637,6 +637,7 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		
 		btnCategories = gtk.ToolButton(gtk.STOCK_DIRECTORY)
+		btnCategories.set_tooltip_text("Show/hide categories")
 		toolbar.insert(btnCategories, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
@@ -644,34 +645,42 @@ class OnlineLifeGui(gtk.Window):
 		bookmarkIcon.set_from_file("images/bookmark_24.png")
 		
 		btnSavedItems = gtk.ToolButton(bookmarkIcon)
+		btnSavedItems.set_tooltip_text("Show/hide bookmarks")
 		toolbar.insert(btnSavedItems, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
+		btnRefresh.set_tooltip_text("Update results")
 		toolbar.insert(btnRefresh, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
+		btnUp.set_tooltip_text("Move up")
 		toolbar.insert(btnUp, -1)
 		
 		btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
+		btnPrev.set_tooltip_text("Go back in history")
 		toolbar.insert(btnPrev, -1)
 		
 		btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
+		btnNext.set_tooltip_text("Go forward in history")
 		toolbar.insert(btnNext, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		entryItem = gtk.ToolItem()
 		entry = gtk.Entry()
+		entry.set_tooltip_text("Search online-life")
 		entryItem.add(entry)
 		toolbar.insert(entryItem, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnActors = gtk.ToolButton(gtk.STOCK_INFO)
+		btnActors.set_tooltip_text("Show/hide info")
 		toolbar.insert(btnActors, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
+		btnExit.set_tooltip_text("Quit program")
 		toolbar.insert(btnExit, -1)
 		
 		vbox.pack_start(toolbar, False, False, 1)
