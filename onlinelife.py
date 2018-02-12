@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import pygtk
+pygtk.require('2.0')
+import gtk
+
 import urllib
 import urllib2
 import sys
@@ -610,4 +614,31 @@ def searchLoop():
 				search_url = DOMAIN + "?" + url_values
 				processSearch(search_url)				
 
-searchLoop()
+#searchLoop()
+
+class OnlineLifeGui(gtk.Window):
+	
+	def __init__(self):
+		super(OnlineLifeGui, self).__init__()
+		
+		self.set_title("Online Life")
+		self.connect("destroy", gtk.main_quit)
+		self.set_border_width(5)
+		self.set_size_request(700, 400)
+		try:
+			self.set_icon_from_file("images/online_life.png")
+		except Exception, e:
+			print e.message
+			sys.exit(1)
+			
+		self.vbox = gtk.VBox(False, 1)
+		self.add(self.vbox)
+		
+		self.show()
+
+def main():
+    gtk.main()
+
+if __name__ == "__main__":
+    gui = OnlineLifeGui()
+    main()
