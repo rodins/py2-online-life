@@ -633,11 +633,14 @@ class OnlineLifeGui(gtk.Window):
 			
 		vbox = gtk.VBox(False, 1)
 		
+		# Toolbar and it's items
+		
 		toolbar = gtk.Toolbar()
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		
 		btnCategories = gtk.ToolButton(gtk.STOCK_DIRECTORY)
 		btnCategories.set_tooltip_text("Show/hide categories")
+		btnCategories.connect("clicked", self.btnCategoriesClicked)
 		toolbar.insert(btnCategories, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
@@ -646,41 +649,49 @@ class OnlineLifeGui(gtk.Window):
 		
 		btnSavedItems = gtk.ToolButton(bookmarkIcon)
 		btnSavedItems.set_tooltip_text("Show/hide bookmarks")
+		btnSavedItems.connect("clicked", self.btnSavedItemsClicked)
 		toolbar.insert(btnSavedItems, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
 		btnRefresh.set_tooltip_text("Update results")
+		btnRefresh.connect("clicked", self.btnRefreshClicked)
 		toolbar.insert(btnRefresh, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
 		btnUp.set_tooltip_text("Move up")
+		btnUp.connect("clicked", self.btnUpClicked)
 		toolbar.insert(btnUp, -1)
 		
 		btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
 		btnPrev.set_tooltip_text("Go back in history")
+		btnPrev.connect("clicked", self.btnPrevClicked)
 		toolbar.insert(btnPrev, -1)
 		
 		btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
 		btnNext.set_tooltip_text("Go forward in history")
+		btnNext.connect("clicked", self.btnNextClicked)
 		toolbar.insert(btnNext, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		entryItem = gtk.ToolItem()
 		entry = gtk.Entry()
 		entry.set_tooltip_text("Search online-life")
+		entry.connect("activate", self.entryActivated)
 		entryItem.add(entry)
 		toolbar.insert(entryItem, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnActors = gtk.ToolButton(gtk.STOCK_INFO)
 		btnActors.set_tooltip_text("Show/hide info")
+		btnActors.connect("clicked", self.btnActorsClicked)
 		toolbar.insert(btnActors, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
 		btnExit.set_tooltip_text("Quit program")
+		btnExit.connect("clicked", gtk.main_quit)
 		toolbar.insert(btnExit, -1)
 		
 		vbox.pack_start(toolbar, False, False, 1)
@@ -689,6 +700,30 @@ class OnlineLifeGui(gtk.Window):
 		self.add(vbox)
 		vbox.show()
 		self.show()
+		
+	def btnCategoriesClicked(self, widget):
+		print("bntCategories clicked")
+		
+	def btnSavedItemsClicked(self, widget):
+		print("btnSavedItems clicked")
+		
+	def btnRefreshClicked(self, widget):
+		print("btnRefresh clicked")
+		
+	def btnUpClicked(self, widget):
+		print("btnUp clicked")
+		
+	def btnPrevClicked(self, widget):
+		print("btnPrev clicked")
+		
+	def btnNextClicked(self, widget):
+		print("btnNext clicked")
+		
+	def entryActivated(self, widget):
+		print("entry activated")
+		
+	def btnActorsClicked(self, widget):
+		print("btnActors clicked")
 
 def main():
     gtk.main()
