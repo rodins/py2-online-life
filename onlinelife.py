@@ -631,9 +631,54 @@ class OnlineLifeGui(gtk.Window):
 			print e.message
 			sys.exit(1)
 			
-		self.vbox = gtk.VBox(False, 1)
-		self.add(self.vbox)
+		vbox = gtk.VBox(False, 1)
 		
+		toolbar = gtk.Toolbar()
+		toolbar.set_style(gtk.TOOLBAR_ICONS)
+		
+		btnCategories = gtk.ToolButton(gtk.STOCK_DIRECTORY)
+		toolbar.insert(btnCategories, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		bookmarkIcon = gtk.Image()
+		bookmarkIcon.set_from_file("images/bookmark_24.png")
+		
+		btnSavedItems = gtk.ToolButton(bookmarkIcon)
+		toolbar.insert(btnSavedItems, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
+		toolbar.insert(btnRefresh, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
+		toolbar.insert(btnUp, -1)
+		
+		btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
+		toolbar.insert(btnPrev, -1)
+		
+		btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
+		toolbar.insert(btnNext, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		entryItem = gtk.ToolItem()
+		entry = gtk.Entry()
+		entryItem.add(entry)
+		toolbar.insert(entryItem, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		btnActors = gtk.ToolButton(gtk.STOCK_INFO)
+		toolbar.insert(btnActors, -1)
+		toolbar.insert(gtk.SeparatorToolItem(), -1)
+		
+		btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
+		toolbar.insert(btnExit, -1)
+		
+		vbox.pack_start(toolbar, False, False, 1)
+		toolbar.show_all()
+		
+		self.add(vbox)
+		vbox.show()
 		self.show()
 
 def main():
