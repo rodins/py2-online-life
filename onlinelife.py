@@ -703,6 +703,21 @@ class OnlineLifeGui(gtk.Window):
 		vbox.pack_start(toolbar, False, False, 1)
 		toolbar.show_all()
 		
+		hbox = gtk.HBox(False, 1)
+		
+		SIDE_SIZE = 220
+		vbLeft = gtk.VBox(False, 1)
+		vbCenter = gtk.VBox(False, 1)
+		vbRight = gtk.VBox(False, 1)
+		vbLeft.set_size_request(SIDE_SIZE, -1)
+		vbRight.set_size_request(SIDE_SIZE, -1)
+		
+		hbox.pack_start(vbLeft, False, False, 1)
+		hbox.pack_start(vbCenter, False, False, 1)
+		hbox.pack_start(vbRight, False, False, 1)
+		
+		vbox.pack_start(hbox, True, True, 1)
+		
 		self.add(vbox)
 		vbox.show()
 		self.show()
