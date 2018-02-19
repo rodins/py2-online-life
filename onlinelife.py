@@ -712,6 +712,32 @@ class OnlineLifeGui(gtk.Window):
 		vbLeft.set_size_request(SIDE_SIZE, -1)
 		vbRight.set_size_request(SIDE_SIZE, -1)
 		
+		# Add widgets to vbLeft
+		tvCategories = self.createTreeView()
+		swCategories = self.createScrolledWindow()
+		swCategories.add(tvCategories)
+		
+		spCategories = gtk.Spinner()
+		
+		btnCategoriesError = gtk.Button("Repeat")
+		hbCategoriesError = gtk.HBox(False, 1)
+		hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
+		
+		tvSavedItems = self.createTreeView()
+		swSavedItems = self.createScrolledWindow()
+		swSavedItems.add(tvSavedItems)
+		frSavedItems = gtk.Frame("Saved items")
+		frSavedItems.add(swSavedItems)
+		
+		vbLeft.pack_start(swCategories, True, True, 1)
+		vbLeft.pack_start(spCategories, True, False, 1)
+		vbLeft.pack_start(hbCategoriesError, True, False, 1)
+		vbLeft.pack_start(frSavedItems, True, True, 1)
+		
+		# Add widgets to vbCenter
+		
+		# Add widgets to vbRight
+		
 		hbox.pack_start(vbLeft, False, False, 1)
 		hbox.pack_start(vbCenter, False, False, 1)
 		hbox.pack_start(vbRight, False, False, 1)
@@ -720,7 +746,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.add(vbox)
 		vbox.show()
-		self.show()
+		self.show()	
 		
 	def btnCategoriesClicked(self, widget):
 		print("bntCategories clicked")
@@ -745,6 +771,30 @@ class OnlineLifeGui(gtk.Window):
 		
 	def btnActorsClicked(self, widget):
 		print("btnActors clicked")
+		
+	def createTreeView(self):
+		treeView = gtk.TreeView()
+		
+		rendererPixbuf = gtk.CellRendererPixbuf()
+		column = gtk.TreeViewColumn("Image", rendererPixbuf, pixbuf=0)
+		treeView.append_column(column)
+		
+		rendererText = gtk.CellRendererText()
+		column = gtk.TreeViewColumn("Title", rendererText, text=1)
+		treeView.append_column(column)
+		
+		treeView.set_headers_visible(False)
+		
+		return treeView
+		
+	def createScrolledWindow(self):
+		scrolledWindow = gtk.ScrolledWindow()
+		scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrolledWindow.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+		return scrolledWindow
+		
+		
+		
 
 def main():
     gtk.main()
