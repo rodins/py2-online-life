@@ -709,6 +709,7 @@ class OnlineLifeGui(gtk.Window):
 		hbox = gtk.HBox(False, 1)
 		
 		SIDE_SIZE = 220
+		SPINNER_SIZE = 32
 		vbLeft = gtk.VBox(False, 1)
 		vbCenter = gtk.VBox(False, 1)
 		vbRight = gtk.VBox(False, 1)
@@ -721,6 +722,7 @@ class OnlineLifeGui(gtk.Window):
 		swCategories.add(tvCategories)
 		
 		spCategories = gtk.Spinner()
+		spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnCategoriesError = gtk.Button("Repeat")
 		hbCategoriesError = gtk.HBox(False, 1)
@@ -749,6 +751,7 @@ class OnlineLifeGui(gtk.Window):
 		swResults.add(ivResults)
 		
 		spCenter = gtk.Spinner()
+		spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnCenterError = gtk.Button("Repeat")
 		hbCenterError = gtk.HBox(False, 1)
@@ -773,12 +776,14 @@ class OnlineLifeGui(gtk.Window):
 		frActors.add(swActors)
 		
 		spActors = gtk.Spinner()
+		spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnActorsError = gtk.Button("Repeat")
 		hbActorsError = gtk.HBox(False, 1)
 		hbActorsError.pack_start(btnActorsError, True, False, 10)
 		
 		spLinks = gtk.Spinner()
+		spLinks.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnLinksError = gtk.Button()
 		image = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_BUTTON)
