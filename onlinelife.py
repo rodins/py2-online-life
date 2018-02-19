@@ -14,6 +14,9 @@ DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
 DOMAIN_NO_SUFFIX = "www.online-life."
 
+COL_PIXBUF = 0
+COL_TEXT = 1
+
 print("Online-life")
 
 class Result:
@@ -735,6 +738,26 @@ class OnlineLifeGui(gtk.Window):
 		vbLeft.pack_start(frSavedItems, True, True, 1)
 		
 		# Add widgets to vbCenter
+		tvPlaylists = self.createTreeView()
+		swPlaylists = self.createScrolledWindow()
+		swPlaylists.add(tvPlaylists)
+		
+		ivResults = gtk.IconView()
+		ivResults.set_pixbuf_column(COL_PIXBUF)
+		ivResults.set_text_column(COL_TEXT)
+		swResults = self.createScrolledWindow()
+		swResults.add(ivResults)
+		
+		spCenter = gtk.Spinner()
+		
+		btnCenterError = gtk.Button("Repeat")
+		hbCenterError = gtk.HBox(False, 1)
+		hbCenterError.pack_start(btnCenterError, True, False, 10)
+		
+		vbCenter.pack_start(swPlaylists, True, True, 1)
+		vbCenter.pack_start(swResults, True, True, 1)
+		vbCenter.pack_start(spCenter, True, False, 1)
+		vbCenter.pack_start(hbCenterError, True, False, 1)
 		
 		# Add widgets to vbRight
 		
