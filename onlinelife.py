@@ -760,6 +760,73 @@ class OnlineLifeGui(gtk.Window):
 		vbCenter.pack_start(hbCenterError, True, False, 1)
 		
 		# Add widgets to vbRight
+		lbInfo = gtk.Label("")
+		lbInfo.set_size_request(SIDE_SIZE, -1)
+		lbInfo.set_line_wrap(True)
+		frInfo = gtk.Frame("Info")
+		frInfo.add(lbInfo)
+		
+		tvActors = self.createTreeView()
+		swActors = self.createScrolledWindow()
+		swActors.add(tvActors)
+		frActors = gtk.Frame("Actors")
+		frActors.add(swActors)
+		
+		spActors = gtk.Spinner()
+		
+		btnActorsError = gtk.Button("Repeat")
+		hbActorsError = gtk.HBox(False, 1)
+		hbActorsError.pack_start(btnActorsError, True, False, 10)
+		
+		spLinks = gtk.Spinner()
+		
+		btnLinksError = gtk.Button()
+		image = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_BUTTON)
+		btnLinksError.set_image(image)
+		btnLinksError.set_tooltip_text("Repeat")
+		
+		btnGetLinks = gtk.Button()
+		image = gtk.image_new_from_stock(gtk.STOCK_COPY, gtk.ICON_SIZE_BUTTON)
+		btnGetLinks.set_image(image)
+		btnGetLinks.set_tooltip_text("Get links")
+		
+		btnListEpisodes = gtk.Button()
+		image = gtk.image_new_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_BUTTON)
+		btnListEpisodes.set_image(image)
+		btnListEpisodes.set_tooltip_text("List episodes")
+		
+		btnSave = gtk.Button()
+		image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
+		btnGetLinks.set_image(image)
+		btnGetLinks.set_tooltip_text("Add to bookmarks")
+		
+		btnDelete = gtk.Button()
+		image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
+		btnGetLinks.set_image(image)
+		btnGetLinks.set_tooltip_text("Remove from bookmarks")
+		
+		hbActions = gtk.HBox(True, 1)
+		hbActions.pack_start(spLinks, True, False, 10)
+		hbActions.pack_start(btnLinksError, True, True, 5)
+		hbActions.pack_start(btnGetLinks, True, True, 5)
+		hbActions.pack_start(btnListEpisodes, True, True, 5)
+		hbActions.pack_start(btnSave, True, True, 5)
+		hbActions.pack_start(btnDelete, True, True, 5)
+		frActions = gtk.Frame("Actions")
+		frActions.add(hbActions)
+		
+		tvBackActors = self.createTreeView()
+		swBackActors = self.createScrolledWindow()
+		swBackActors.add(tvBackActors)
+		frBackActors = gtk.Frame("Actors history")
+		frBackActors.add(swBackActors)
+		
+		vbRight.pack_start(frInfo, False, False, 1)
+		vbRight.pack_start(frActors, False, False, 1)
+		vbRight.pack_start(spActors, True, False, 1)
+		vbRight.pack_start(hbActorsError, True, False, 1)
+		vbRight.pack_start(frActions, False, False, 1)
+		vbRight.pack_start(frBackActors, True, True, 1)
 		
 		hbox.pack_start(vbLeft, False, False, 1)
 		hbox.pack_start(vbCenter, False, False, 1)
