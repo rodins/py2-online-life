@@ -9,6 +9,7 @@ import urllib
 import urllib2
 import sys
 from subprocess import call
+import threading
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -17,7 +18,8 @@ DOMAIN_NO_SUFFIX = "www.online-life."
 COL_PIXBUF = 0
 COL_TEXT = 1
 
-print("Online-life")
+FILE_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/link_16.png")
+DIR_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/folder_16.png")
 
 class Result:
 	title = ""
@@ -224,77 +226,6 @@ def resultsToItems(url):
 	except Exception as ex:
 		print("Network problem", ex)
 	return(results, "", "") 
-	
-
-def categoriesToItems():
-	try:
-		begin_found = False
-		drop_found = False
-		is_drop_first = False
-		
-		items = []
-		print("Getting categories...")
-		response = urllib2.urlopen(DOMAIN)
-		
-		#response = open("Home.html", "r")
-		
-		for line in response:
-			if line.find("<div class=\"nav\">") != -1:
-				begin_found = True
-				main = Category()
-				mainCategoryItem = Result()
-				mainCategoryItem.title = "Главная"
-				mainCategoryItem.href = DOMAIN
-				main.result = mainCategoryItem
-				items.append(main)
-			
-			if begin_found:
-				# Find new, popular, best
-				pull_right_begin = line.find("li class=\"pull-right")
-				pull_right_end = line.find("</li>", pull_right_begin+1)
-				if pull_right_begin != -1 and pull_right_end != -1:
-				    pull_right = line[pull_right_begin: pull_right_end]
-				    result = parseAnchor(pull_right)
-				    main.results.append(result)
-				    continue
-				
-				trailer_begin = line.find("<li class=\"nodrop\" ")
-				trailer_end = line.find("</a>", trailer_begin+1)
-				if trailer_begin != -1 and trailer_end != -1:
-					trailer = line[trailer_begin: trailer_end+4]
-					result = parseAnchor(trailer)
-					main.results.append(result)
-					continue
-				
-				# Find drop item
-				if line.find("<li class=\"drop\">") != -1:
-					drop_found = True
-					is_drop_first = True
-					
-				if drop_found:
-					result = parseAnchor(line)
-					if result != None:
-						if is_drop_first:
-							categoryItem = result
-							results = []
-							is_drop_first = False
-						else:
-							results.append(result)	
-					
-				if line.find("</ul>") != -1 and drop_found:
-					drop_found = False
-					category = Category()
-					category.result = categoryItem
-					category.results = results
-					items.append(category)
-								
-			if line.find("</div>") != -1 and begin_found:
-				begin_found = False
-				response.close()
-				return items
-				
-	except Exception as ex:
-		print("Network problem", ex)
 		
 def parseAnchor(line):
 	anchor_begin = line.find("<a href=")
@@ -637,7 +568,6 @@ class OnlineLifeGui(gtk.Window):
 		vbox = gtk.VBox(False, 1)
 		
 		# Toolbar and it's items
-		
 		toolbar = gtk.Toolbar()
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		
@@ -710,23 +640,24 @@ class OnlineLifeGui(gtk.Window):
 		
 		SIDE_SIZE = 220
 		SPINNER_SIZE = 32
-		vbLeft = gtk.VBox(False, 1)
+		self.vbLeft = gtk.VBox(False, 1)
 		vbCenter = gtk.VBox(False, 1)
 		vbRight = gtk.VBox(False, 1)
-		vbLeft.set_size_request(SIDE_SIZE, -1)
+		self.vbLeft.set_size_request(SIDE_SIZE, -1)
 		vbRight.set_size_request(SIDE_SIZE, -1)
 		
 		# Add widgets to vbLeft
-		tvCategories = self.createTreeView()
-		swCategories = self.createScrolledWindow()
-		swCategories.add(tvCategories)
+		self.tvCategories = self.createTreeView()
+		self.tvCategories.show()
+		self.swCategories = self.createScrolledWindow()
+		self.swCategories.add(self.tvCategories)
 		
-		spCategories = gtk.Spinner()
-		spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
+		self.spCategories = gtk.Spinner()
+		self.spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
-		btnCategoriesError = gtk.Button("Repeat")
+		self.btnCategoriesError = gtk.Button("Repeat")
 		hbCategoriesError = gtk.HBox(False, 1)
-		hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
+		hbCategoriesError.pack_start(self.btnCategoriesError, True, False, 10)
 		
 		tvSavedItems = self.createTreeView()
 		swSavedItems = self.createScrolledWindow()
@@ -734,10 +665,10 @@ class OnlineLifeGui(gtk.Window):
 		frSavedItems = gtk.Frame("Saved items")
 		frSavedItems.add(swSavedItems)
 		
-		vbLeft.pack_start(swCategories, True, True, 1)
-		vbLeft.pack_start(spCategories, True, False, 1)
-		vbLeft.pack_start(hbCategoriesError, True, False, 1)
-		vbLeft.pack_start(frSavedItems, True, True, 1)
+		self.vbLeft.pack_start(self.swCategories, True, True, 1)
+		self.vbLeft.pack_start(self.spCategories, True, False, 1)
+		self.vbLeft.pack_start(hbCategoriesError, True, False, 1)
+		self.vbLeft.pack_start(frSavedItems, True, True, 1)
 		
 		# Add widgets to vbCenter
 		tvPlaylists = self.createTreeView()
@@ -749,6 +680,7 @@ class OnlineLifeGui(gtk.Window):
 		ivResults.set_text_column(COL_TEXT)
 		swResults = self.createScrolledWindow()
 		swResults.add(ivResults)
+		swResults.show_all()
 		
 		spCenter = gtk.Spinner()
 		spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -833,18 +765,48 @@ class OnlineLifeGui(gtk.Window):
 		vbRight.pack_start(frActions, False, False, 1)
 		vbRight.pack_start(frBackActors, True, True, 1)
 		
-		hbox.pack_start(vbLeft, False, False, 1)
-		hbox.pack_start(vbCenter, False, False, 1)
+		hbox.pack_start(self.vbLeft, False, False, 1)
+		hbox.pack_start(vbCenter, True, True, 1)
 		hbox.pack_start(vbRight, False, False, 1)
 		
 		vbox.pack_start(hbox, True, True, 1)
 		
 		self.add(vbox)
 		vbox.show()
-		self.show()	
+		hbox.show()
+		vbCenter.show()
+		self.show()
+		
+		self.isCategoriesSet = False
+		
+	def showCategoriesSpinner(self):
+	    self.spCategories.show()
+	    self.spCategories.start()
+	    self.swCategories.hide()
+	    self.btnCategoriesError.hide()
+	
+	def showCategoriesData(self):
+	    self.spCategories.hide()
+	    self.spCategories.stop()
+	    self.swCategories.show()
+	    self.btnCategoriesError.hide()
+	
+	def	showCategoriesError(self):
+	    self.spCategories.hide()
+	    self.spCategories.stop()
+	    self.swCategories.hide()
+	    self.btnCategoriesError.show()
 		
 	def btnCategoriesClicked(self, widget):
-		print("bntCategories clicked")
+		if self.vbLeft.get_visible():
+			self.vbLeft.hide()
+		else:
+			self.vbLeft.show()
+			if self.isCategoriesSet:
+				self.showCategoriesData()
+			else:
+			    thread = CategoriesThread(self)
+			    thread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -888,11 +850,104 @@ class OnlineLifeGui(gtk.Window):
 		scrolledWindow.set_shadow_type(gtk.SHADOW_ETCHED_IN)
 		return scrolledWindow
 		
+class CategoriesThread(threading.Thread):
+	
+	def __init__(self, gui):
+		self.gui = gui
+		threading.Thread.__init__(self)
 		
+	def parseAnchor(self, line):
+		anchor_begin = line.find("<a href=")
+		anchor_end = line.find("</a>")
+		if anchor_begin != -1 and anchor_end != -1:
+			anchor = line[anchor_begin:anchor_end]
+			href_begin = anchor.find("\"")
+			href_end = anchor.find("\"", href_begin+1)
+			title_begin = anchor.find(">")
+			href = anchor[href_begin+1: href_end]
+			title = anchor[title_begin+1:].decode('cp1251')
+			if href.find(WDOMAIN) == -1:
+				href = WDOMAIN + href
+			return (title, href)
+		
+	def onPreExecute(self):
+		gtk.gdk.threads_enter()
+		self.gui.showCategoriesSpinner()
+		gtk.gdk.threads_leave()
+		
+	def run(self):
+		self.onPreExecute()		
+		try:
+			treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
+			
+			begin_found = False
+			drop_found = False
+			is_drop_first = False
+			itMain = None
+			itDrop = None
+			
+			response = urllib2.urlopen(DOMAIN)
+			
+			for line in response:
+				if line.find("<div class=\"nav\">") != -1:
+					begin_found = True
+					itMain = treestore.append(None, [DIR_PIXBUF, "Главная", DOMAIN])
+				
+				if begin_found:
+					# Find new, popular, best
+					pull_right_begin = line.find("li class=\"pull-right")
+					pull_right_end = line.find("</li>", pull_right_begin+1)
+					if pull_right_begin != -1 and pull_right_end != -1:
+					    pull_right = line[pull_right_begin: pull_right_end]
+					    title, href = self.parseAnchor(pull_right)
+					    treestore.append(itMain, [FILE_PIXBUF, title, href])
+					    continue
+					
+					trailer_begin = line.find("<li class=\"nodrop\" ")
+					trailer_end = line.find("</a>", trailer_begin+1)
+					if trailer_begin != -1 and trailer_end != -1:
+						trailer = line[trailer_begin: trailer_end+4]
+						title, href = self.parseAnchor(trailer)
+						treestore.append(itMain, [FILE_PIXBUF, title, href])
+						continue
+					
+					# Find drop item
+					if line.find("<li class=\"drop\">") != -1:
+						drop_found = True
+						is_drop_first = True
+						
+					if drop_found:
+						result = self.parseAnchor(line)
+						if result != None:
+							if is_drop_first:
+								itDrop = treestore.append(None, [DIR_PIXBUF, result[0], result[1]])
+								is_drop_first = False
+							else:
+								treestore.append(itDrop, [FILE_PIXBUF, result[0], result[1]])	
+						
+					if line.find("</ul>") != -1 and drop_found:
+						drop_found = False
+									
+				if line.find("</div>") != -1 and begin_found:
+					begin_found = False
+					response.close()
+					gtk.gdk.threads_enter()
+					# On post execute
+					gui.isCategoriesSet = True
+					gui.tvCategories.set_model(treestore)
+					gui.showCategoriesData()
+					gtk.gdk.threads_leave()
+					break
+					
+		except Exception as ex:
+			gtk.gdk.threads_enter()
+			gui.showCategoriesError()
+			gtk.gdk.threads_enter()
 		
 
 def main():
-    gtk.main()
+	gtk.gdk.threads_init()
+	gtk.main()
 
 if __name__ == "__main__":
     gui = OnlineLifeGui()
