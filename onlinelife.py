@@ -4,6 +4,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import gobject
 
 import urllib
 import urllib2
@@ -799,6 +800,33 @@ class OnlineLifeGui(gtk.Window):
 	    self.spCategories.stop()
 	    self.swCategories.hide()
 	    self.hbCategoriesError.show()
+	    
+	def onCategoriesPreExecute(self):
+		self.treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
+		self.isCategoriesThreadStarted = True
+		self.showCategoriesSpinner()
+		
+	def addMainToRoot(self):
+		self.itMain = self.treestore.append(None, [DIR_PIXBUF, "Главная", DOMAIN])
+		
+	def addToMain(self, title, href):
+		self.treestore.append(self.itMain, [FILE_PIXBUF, title, href])
+		
+	def addDropToRoot(self, title, href):
+		self.itDrop = self.treestore.append(None, [DIR_PIXBUF, title, href])
+		
+	def addToDrop(self, title, href):
+		self.treestore.append(self.itDrop, [FILE_PIXBUF, title, href])
+		
+	def onCategoriesPostExecute(self):
+		self.isCategoriesSet = True
+		self.isCategoriesThreadStarted = False
+		self.tvCategories.set_model(self.treestore)
+		self.showCategoriesData()
+		
+	def onCategoriesError(self):
+		self.isCategoriesThreadStarted = False
+		self.showCategoriesError()
 		
 	def btnCategoriesClicked(self, widget):
 		if self.vbLeft.get_visible():
@@ -859,7 +887,7 @@ class OnlineLifeGui(gtk.Window):
 		
 class CategoriesThread(threading.Thread):
 	
-	def __init__(self, gui):
+	def __init__(self, gui = None):
 		self.gui = gui
 		threading.Thread.__init__(self)
 		
@@ -878,28 +906,21 @@ class CategoriesThread(threading.Thread):
 			return (title, href)
 		
 	def onPreExecute(self):
-		gtk.gdk.threads_enter()
-		self.gui.isCategoriesThreadStarted = True
-		self.gui.showCategoriesSpinner()
-		gtk.gdk.threads_leave()
+		gobject.idle_add(self.gui.onCategoriesPreExecute)
 		
 	def run(self):
 		self.onPreExecute()		
 		try:
-			treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
-			
 			begin_found = False
 			drop_found = False
 			is_drop_first = False
-			itMain = None
-			itDrop = None
 			
 			response = urllib2.urlopen(DOMAIN)
 			
 			for line in response:
 				if line.find("<div class=\"nav\">") != -1:
 					begin_found = True
-					itMain = treestore.append(None, [DIR_PIXBUF, "Главная", DOMAIN])
+					gobject.idle_add(self.gui.addMainToRoot)
 				
 				if begin_found:
 					# Find new, popular, best
@@ -908,7 +929,7 @@ class CategoriesThread(threading.Thread):
 					if pull_right_begin != -1 and pull_right_end != -1:
 					    pull_right = line[pull_right_begin: pull_right_end]
 					    title, href = self.parseAnchor(pull_right)
-					    treestore.append(itMain, [FILE_PIXBUF, title, href])
+					    gobject.idle_add(self.gui.addToMain, title, href)
 					    continue
 					
 					trailer_begin = line.find("<li class=\"nodrop\" ")
@@ -916,7 +937,7 @@ class CategoriesThread(threading.Thread):
 					if trailer_begin != -1 and trailer_end != -1:
 						trailer = line[trailer_begin: trailer_end+4]
 						title, href = self.parseAnchor(trailer)
-						treestore.append(itMain, [FILE_PIXBUF, title, href])
+						gobject.idle_add(self.gui.addToMain, title, href)
 						continue
 					
 					# Find drop item
@@ -928,10 +949,10 @@ class CategoriesThread(threading.Thread):
 						result = self.parseAnchor(line)
 						if result != None:
 							if is_drop_first:
-								itDrop = treestore.append(None, [DIR_PIXBUF, result[0], result[1]])
+								gobject.idle_add(self.gui.addDropToRoot, result[0], result[1])
 								is_drop_first = False
 							else:
-								treestore.append(itDrop, [FILE_PIXBUF, result[0], result[1]])	
+								gobject.idle_add(self.gui.addToDrop, result[0], result[1])	
 						
 					if line.find("</ul>") != -1 and drop_found:
 						drop_found = False
@@ -939,24 +960,12 @@ class CategoriesThread(threading.Thread):
 				if line.find("</div>") != -1 and begin_found:
 					begin_found = False
 					response.close()
-					gtk.gdk.threads_enter()
-					# On post execute
-					self.gui.isCategoriesSet = True
-					self.gui.isCategoriesThreadStarted = False
-					self.gui.tvCategories.set_model(treestore)
-					self.gui.showCategoriesData()
-					gtk.gdk.threads_leave()
-					break
-					
+					gobject.idle_add(self.gui.onCategoriesPostExecute)
 		except Exception as ex:
-			print(ex)
-			gtk.gdk.threads_enter()
-			self.gui.isCategoriesThreadStarted = False
-			self.gui.showCategoriesError()
-			gtk.gdk.threads_leave()		
+		    gobject.idle_add(self.gui.onCategoriesError)		
 
 def main():
-	gtk.gdk.threads_init()
+	gobject.threads_init()
 	gtk.main()
 
 if __name__ == "__main__":
