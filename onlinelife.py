@@ -655,9 +655,11 @@ class OnlineLifeGui(gtk.Window):
 		self.spCategories = gtk.Spinner()
 		self.spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
-		self.btnCategoriesError = gtk.Button("Repeat")
-		hbCategoriesError = gtk.HBox(False, 1)
-		hbCategoriesError.pack_start(self.btnCategoriesError, True, False, 10)
+		btnCategoriesError = gtk.Button("Repeat")
+		btnCategoriesError.connect("clicked", self.btnCategoriesErrorClicked)
+		btnCategoriesError.show()
+		self.hbCategoriesError = gtk.HBox(False, 1)
+		self.hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
 		
 		tvSavedItems = self.createTreeView()
 		swSavedItems = self.createScrolledWindow()
@@ -667,7 +669,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.vbLeft.pack_start(self.swCategories, True, True, 1)
 		self.vbLeft.pack_start(self.spCategories, True, False, 1)
-		self.vbLeft.pack_start(hbCategoriesError, True, False, 1)
+		self.vbLeft.pack_start(self.hbCategoriesError, True, False, 1)
 		self.vbLeft.pack_start(frSavedItems, True, True, 1)
 		
 		# Add widgets to vbCenter
@@ -778,24 +780,25 @@ class OnlineLifeGui(gtk.Window):
 		self.show()
 		
 		self.isCategoriesSet = False
+		self.isCategoriesThreadStarted = False
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
 	    self.spCategories.start()
 	    self.swCategories.hide()
-	    self.btnCategoriesError.hide()
+	    self.hbCategoriesError.hide()
 	
 	def showCategoriesData(self):
 	    self.spCategories.hide()
 	    self.spCategories.stop()
 	    self.swCategories.show()
-	    self.btnCategoriesError.hide()
+	    self.hbCategoriesError.hide()
 	
 	def	showCategoriesError(self):
 	    self.spCategories.hide()
 	    self.spCategories.stop()
 	    self.swCategories.hide()
-	    self.btnCategoriesError.show()
+	    self.hbCategoriesError.show()
 		
 	def btnCategoriesClicked(self, widget):
 		if self.vbLeft.get_visible():
@@ -804,9 +807,13 @@ class OnlineLifeGui(gtk.Window):
 			self.vbLeft.show()
 			if self.isCategoriesSet:
 				self.showCategoriesData()
-			else:
+			elif not self.isCategoriesThreadStarted:
 			    thread = CategoriesThread(self)
 			    thread.start()
+			    
+	def btnCategoriesErrorClicked(self, widget):
+		thread = CategoriesThread(self)
+		thread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -872,6 +879,7 @@ class CategoriesThread(threading.Thread):
 		
 	def onPreExecute(self):
 		gtk.gdk.threads_enter()
+		self.gui.isCategoriesThreadStarted = True
 		self.gui.showCategoriesSpinner()
 		gtk.gdk.threads_leave()
 		
@@ -933,17 +941,19 @@ class CategoriesThread(threading.Thread):
 					response.close()
 					gtk.gdk.threads_enter()
 					# On post execute
-					gui.isCategoriesSet = True
-					gui.tvCategories.set_model(treestore)
-					gui.showCategoriesData()
+					self.gui.isCategoriesSet = True
+					self.gui.isCategoriesThreadStarted = False
+					self.gui.tvCategories.set_model(treestore)
+					self.gui.showCategoriesData()
 					gtk.gdk.threads_leave()
 					break
 					
 		except Exception as ex:
+			print(ex)
 			gtk.gdk.threads_enter()
-			gui.showCategoriesError()
-			gtk.gdk.threads_enter()
-		
+			self.gui.isCategoriesThreadStarted = False
+			self.gui.showCategoriesError()
+			gtk.gdk.threads_leave()		
 
 def main():
 	gtk.gdk.threads_init()
