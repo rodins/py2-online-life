@@ -906,7 +906,7 @@ class CategoriesThread(threading.Thread):
 			return (title, href)
 		
 	def onPreExecute(self):
-		gobject.idle_add(self.gui.onCategoriesPreExecute)
+	    gobject.idle_add(self.gui.onCategoriesPreExecute)
 		
 	def run(self):
 		self.onPreExecute()		
@@ -961,8 +961,11 @@ class CategoriesThread(threading.Thread):
 					begin_found = False
 					response.close()
 					gobject.idle_add(self.gui.onCategoriesPostExecute)
+					break
+					
 		except Exception as ex:
-		    gobject.idle_add(self.gui.onCategoriesError)		
+			gobject.idle_add(self.gui.onCategoriesError)
+					
 
 def main():
 	gobject.threads_init()
