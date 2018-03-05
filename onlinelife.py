@@ -557,7 +557,7 @@ class OnlineLifeGui(gtk.Window):
 		super(OnlineLifeGui, self).__init__()
 		
 		self.set_title("Online Life")
-		self.connect("destroy", gtk.main_quit)
+		self.connect("destroy", self.onDestroy)
 		self.set_border_width(5)
 		self.set_size_request(700, 400)
 		try:
@@ -860,6 +860,10 @@ class OnlineLifeGui(gtk.Window):
 	def btnActorsClicked(self, widget):
 		print("btnActors clicked")
 		
+	def onDestroy(self, widget):
+		print("onDestroy")
+		gtk.main_quit()
+		
 	def createTreeView(self):
 		treeView = gtk.TreeView()
 		
@@ -885,6 +889,7 @@ class CategoriesThread(threading.Thread):
 	
 	def __init__(self, gui = None):
 		self.gui = gui
+		self.isCancelled = False
 		threading.Thread.__init__(self)
 		
 	def parseAnchor(self, line):
@@ -900,6 +905,9 @@ class CategoriesThread(threading.Thread):
 			if href.find(WDOMAIN) == -1:
 				href = WDOMAIN + href
 			return (title, href)
+			
+	def cancel(self):
+		self.isCancelled = True
 		
 	def run(self):
 		gobject.idle_add(self.gui.onCategoriesPreExecute)	
@@ -911,6 +919,10 @@ class CategoriesThread(threading.Thread):
 			response = urllib2.urlopen(DOMAIN)
 			
 			for line in response:
+				if self.isCancelled:
+					gobject.idle_add(self.gui.showCategoriesData)
+					break
+				
 				if line.find("<div class=\"nav\">") != -1:
 					begin_found = True
 					gobject.idle_add(self.gui.addMainToRoot)
