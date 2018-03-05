@@ -631,7 +631,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
 		btnExit.set_tooltip_text("Quit program")
-		btnExit.connect("clicked", gtk.main_quit)
+		btnExit.connect("clicked", self.btnQuitClicked)
 		toolbar.insert(btnExit, -1)
 		
 		vbox.pack_start(toolbar, False, False, 1)
@@ -860,8 +860,12 @@ class OnlineLifeGui(gtk.Window):
 	def btnActorsClicked(self, widget):
 		print("btnActors clicked")
 		
+	def btnQuitClicked(self, widget):
+		self.destroy()
+		
 	def onDestroy(self, widget):
-		print("onDestroy")
+		if self.categoriesThread != None and self.categoriesThread.is_alive:
+			self.categoriesThread.cancel()
 		gtk.main_quit()
 		
 	def createTreeView(self):
