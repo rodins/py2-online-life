@@ -780,7 +780,6 @@ class OnlineLifeGui(gtk.Window):
 		vbCenter.show()
 		self.show()
 		
-		self.isCategoriesSet = False
 		self.categoriesThread = None
 		
 	def showCategoriesSpinner(self):
@@ -818,7 +817,6 @@ class OnlineLifeGui(gtk.Window):
 		self.treestore.append(self.itDrop, [FILE_PIXBUF, title, href])
 		
 	def onCategoriesPostExecute(self):
-		self.isCategoriesSet = True
 		self.tvCategories.set_model(self.treestore)
 		self.showCategoriesData()
 		
@@ -830,7 +828,7 @@ class OnlineLifeGui(gtk.Window):
 			self.vbLeft.hide()
 		else:
 			self.vbLeft.show()
-			if self.isCategoriesSet:
+			if self.tvCategories.get_model() != None:
 				self.showCategoriesData()
 			elif self.categoriesThread == None or not self.categoriesThread.is_alive():
 			    self.categoriesThread = CategoriesThread(self)
