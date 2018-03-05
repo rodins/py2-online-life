@@ -781,7 +781,7 @@ class OnlineLifeGui(gtk.Window):
 		self.show()
 		
 		self.isCategoriesSet = False
-		self.isCategoriesThreadStarted = False
+		self.categoriesThread = None
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -803,7 +803,6 @@ class OnlineLifeGui(gtk.Window):
 	    
 	def onCategoriesPreExecute(self):
 		self.treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
-		self.isCategoriesThreadStarted = True
 		self.showCategoriesSpinner()
 		
 	def addMainToRoot(self):
@@ -820,12 +819,10 @@ class OnlineLifeGui(gtk.Window):
 		
 	def onCategoriesPostExecute(self):
 		self.isCategoriesSet = True
-		self.isCategoriesThreadStarted = False
 		self.tvCategories.set_model(self.treestore)
 		self.showCategoriesData()
 		
 	def onCategoriesError(self):
-		self.isCategoriesThreadStarted = False
 		self.showCategoriesError()
 		
 	def btnCategoriesClicked(self, widget):
@@ -835,13 +832,14 @@ class OnlineLifeGui(gtk.Window):
 			self.vbLeft.show()
 			if self.isCategoriesSet:
 				self.showCategoriesData()
-			elif not self.isCategoriesThreadStarted:
-			    thread = CategoriesThread(self)
-			    thread.start()
+			elif self.categoriesThread == None or not self.categoriesThread.is_alive():
+			    self.categoriesThread = CategoriesThread(self)
+			    self.categoriesThread.start()
 			    
 	def btnCategoriesErrorClicked(self, widget):
-		thread = CategoriesThread(self)
-		thread.start()
+		if not self.categoriesThread.is_alive():
+		    self.categoriesThread = CategoriesThread(self)
+		    self.categoriesThread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -905,11 +903,8 @@ class CategoriesThread(threading.Thread):
 				href = WDOMAIN + href
 			return (title, href)
 		
-	def onPreExecute(self):
-	    gobject.idle_add(self.gui.onCategoriesPreExecute)
-		
 	def run(self):
-		self.onPreExecute()		
+		gobject.idle_add(self.gui.onCategoriesPreExecute)	
 		try:
 			begin_found = False
 			drop_found = False
