@@ -649,6 +649,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		# Add widgets to vbLeft
 		self.tvCategories = self.createTreeView()
+		self.tvCategories.connect("row-activated", self.tvCategoriesRowActivated)
 		self.tvCategories.show()
 		self.swCategories = self.createScrolledWindow()
 		self.swCategories.add(self.tvCategories)
@@ -867,6 +868,15 @@ class OnlineLifeGui(gtk.Window):
 		if self.categoriesThread != None and self.categoriesThread.is_alive:
 			self.categoriesThread.cancel()
 		gtk.main_quit()
+		
+	def tvCategoriesRowActivated(self, treeview, path, view_column):
+		model = treeview.get_model()
+		iter = model.get_iter(path)
+		values = model.get(iter, 1, 2) # 0 column is icon
+		print("Title: " + values[0])
+		print("Link: " + values[1])
+		#self.resultsThread = new ResultsThread(values)
+		#self.resultsThread.start()
 		
 	def createTreeView(self):
 		treeView = gtk.TreeView()
