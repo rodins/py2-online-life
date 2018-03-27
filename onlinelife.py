@@ -18,9 +18,11 @@ DOMAIN_NO_SUFFIX = "www.online-life."
 
 COL_PIXBUF = 0
 COL_TEXT = 1
+ICON_VIEW_ITEM_WIDTH = 180
 
 FILE_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/link_16.png")
 DIR_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/folder_16.png")
+EMPTY_POSTER = gtk.gdk.pixbuf_new_from_file("images/blank.png")
 
 class Result:
 	title = ""
@@ -676,27 +678,29 @@ class OnlineLifeGui(gtk.Window):
 		
 		# Add widgets to vbCenter
 		tvPlaylists = self.createTreeView()
-		swPlaylists = self.createScrolledWindow()
-		swPlaylists.add(tvPlaylists)
+		self.swPlaylists = self.createScrolledWindow()
+		self.swPlaylists.add(tvPlaylists)
 		
-		ivResults = gtk.IconView()
-		ivResults.set_pixbuf_column(COL_PIXBUF)
-		ivResults.set_text_column(COL_TEXT)
-		swResults = self.createScrolledWindow()
-		swResults.add(ivResults)
-		swResults.show_all()
+		self.ivResults = gtk.IconView()
+		self.ivResults.set_pixbuf_column(COL_PIXBUF)
+		self.ivResults.set_text_column(COL_TEXT)
+		self.ivResults.set_item_width(ICON_VIEW_ITEM_WIDTH)
+		self.swResults = self.createScrolledWindow()
+		self.swResults.add(self.ivResults)
+		self.swResults.show_all()
 		
-		spCenter = gtk.Spinner()
-		spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
+		self.spCenter = gtk.Spinner()
+		self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnCenterError = gtk.Button("Repeat")
-		hbCenterError = gtk.HBox(False, 1)
-		hbCenterError.pack_start(btnCenterError, True, False, 10)
+		btnCenterError.show()
+		self.hbCenterError = gtk.HBox(False, 1)
+		self.hbCenterError.pack_start(btnCenterError, True, False, 10)
 		
-		vbCenter.pack_start(swPlaylists, True, True, 1)
-		vbCenter.pack_start(swResults, True, True, 1)
-		vbCenter.pack_start(spCenter, True, False, 1)
-		vbCenter.pack_start(hbCenterError, True, False, 1)
+		vbCenter.pack_start(self.swPlaylists, True, True, 1)
+		vbCenter.pack_start(self.swResults, True, True, 1)
+		vbCenter.pack_start(self.spCenter, True, False, 1)
+		vbCenter.pack_start(self.hbCenterError, True, False, 1)
 		
 		# Add widgets to vbRight
 		lbInfo = gtk.Label("")
@@ -782,6 +786,7 @@ class OnlineLifeGui(gtk.Window):
 		self.show()
 		
 		self.categoriesThread = None
+		self.resultsThread = None
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -839,6 +844,51 @@ class OnlineLifeGui(gtk.Window):
 		if not self.categoriesThread.is_alive():
 		    self.categoriesThread = CategoriesThread(self)
 		    self.categoriesThread.start()
+	
+	def showCenterSpinner(self):
+		self.spCenter.show()
+		self.spCenter.start()
+		self.swPlaylists.hide()
+		self.swResults.hide()
+		self.hbCenterError.hide()
+		
+	def showResultsData(self):
+		self.spCenter.hide()
+		self.spCenter.stop()
+		self.swPlaylists.hide()
+		self.swResults.show()
+		self.hbCenterError.hide()
+		
+	def showPlaylsitsData(self):
+		self.spCenter.hide()
+		self.spCenter.stop()
+		self.swPlaylists.show()
+		self.swResults.hide()
+		self.hbCenterError.hide()
+		
+	def showCenterError(self):
+		self.spCenter.hide()
+		self.spCenter.stop()
+		self.swPlaylists.hide()
+		self.swResults.hide()
+		self.hbCenterError.show()
+		
+	def onResultsPreExecute(self):
+		self.showCenterSpinner()
+		
+	def onFirstItemReceived(self):
+		self.createAndSetResultsModel()
+		self.showResultsData()
+		
+	def createAndSetResultsModel(self):
+		self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
+		self.ivResults.set_model(self.resultsStore) 
+		
+	def addToResultsModel(self, title, href, image):
+		self.resultsStore.append([EMPTY_POSTER, title, href])
+		
+	def onResultsPostExecute(self):
+		pass
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -867,16 +917,16 @@ class OnlineLifeGui(gtk.Window):
 	def onDestroy(self, widget):
 		if self.categoriesThread != None and self.categoriesThread.is_alive:
 			self.categoriesThread.cancel()
+		if self.resultsThread != None and self.resultsThread.is_alive:
+			self.resultsThread.cancel()
 		gtk.main_quit()
 		
 	def tvCategoriesRowActivated(self, treeview, path, view_column):
 		model = treeview.get_model()
 		iter = model.get_iter(path)
 		values = model.get(iter, 1, 2) # 0 column is icon
-		print("Title: " + values[0])
-		print("Link: " + values[1])
-		#self.resultsThread = new ResultsThread(values)
-		#self.resultsThread.start()
+		self.resultsThread = ResultsThread(self, values)
+		self.resultsThread.start()
 		
 	def createTreeView(self):
 		treeView = gtk.TreeView()
@@ -985,7 +1035,112 @@ class CategoriesThread(threading.Thread):
 		except Exception as ex:
 			gobject.idle_add(self.gui.onCategoriesError)
 					
-
+class ResultsThread(threading.Thread):
+	
+	def __init__(self, gui, values):
+		self.gui = gui
+		self.title = values[0]
+		self.link = values[1]
+		self.isCancelled = False
+		threading.Thread.__init__(self)
+	
+	def run(self):
+		gobject.idle_add(self.gui.onResultsPreExecute)	
+		try:
+			poster_found = False
+			poster = ""
+			count = 0
+		    
+			response = urllib2.urlopen(self.link)
+			
+			for line in response:
+				if self.isCancelled:
+					gobject.idle_add(self.gui.showResultsData)
+					break
+				
+				poster_begin = line.find("<div class=\"custom-poster\"")
+				poster_end = line.find("</a>")
+				
+				pager_begin = line.find("class=\"navigation\"")
+				if pager_begin != -1 and not poster_found:
+					pager = line[pager_begin:]
+					next_page = self.parse_pager(pager)
+					print("Next page: " + next_page)
+					return #(results, prev_page, next_page)
+				
+				if poster_begin != -1:
+					poster_found = True
+				elif poster_end != -1 and poster_found:
+					poster_found = False
+					poster_end_str = line[:poster_end].strip()
+					if len(poster_end_str) > 0:
+						poster += poster_end_str
+					title_begin = poster.find("/>")
+					if title_begin != -1:
+						title = poster[title_begin+2:].decode('cp1251')
+						# Delete title new line
+						title_new_line = title.find('\n')
+						if title_new_line != -1:
+							title = title[:title_new_line]
+						count += 1
+						
+						href_begin = poster.find("href=")
+						href_end = poster.find(".html", href_begin+1)
+						
+						if href_begin != -1 and href_end != -1:
+							href = poster[href_begin+6: href_end+5]
+							if(count == 1):
+								gobject.idle_add(self.gui.onFirstItemReceived)
+							
+			                image = ""
+			                gobject.idle_add(self.gui.addToResultsModel, title, href, image)
+			                
+							#TODO: detect poster image
+					poster = ""
+				elif poster_found:
+					if poster == "":
+						poster = line
+					else:
+					    poster += line
+					
+		except Exception as ex:
+			print(ex)
+			gobject.idle_add(self.gui.showCenterError)
+			
+	def cancel(self):
+		self.isCancelled = True
+		
+	def parse_pager_href(self, anchor):
+		href_begin = anchor.find("href=\"")
+		href_end = anchor.find("\"", href_begin+6)
+		if href_begin != -1 and href_end != -1:
+			href = anchor[href_begin+6: href_end]
+			if href == "#":
+				list_submit_begin = anchor.find("list_submit(")
+				list_submit_end = anchor.find(")", list_submit_begin)
+				if list_submit_begin != -1 and list_submit_end != -1:
+					return anchor[list_submit_begin+12: list_submit_end]
+			else:
+				return href
+					
+	def parse_pager(self, pager):
+		next_page = ""
+		
+		anchor_begin = pager.find("<a")
+		anchor_end = pager.find("</a>", anchor_begin+1)
+		while anchor_begin != -1 and anchor_end != -1:
+			anchor = pager[anchor_begin: anchor_end]
+			
+			title_begin = anchor.find(">")
+			title = anchor[title_begin+1:].decode('cp1251')
+			if title == u"Вперед":
+				next_page = self.parse_pager_href(anchor)
+			
+			anchor_begin = pager.find("<a", anchor_end)
+			anchor_end = pager.find("</a>", anchor_begin)
+			
+		return next_page
+		
 def main():
 	gobject.threads_init()
 	gtk.main()
