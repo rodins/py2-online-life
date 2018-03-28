@@ -871,12 +871,14 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.hide()
 		
 	def showCenterError(self, title):
-		if(title != ""):
+		isPaging = (title == "")
+		if(not isPaging):
 		    self.set_title(PROG_NAME + " - Error")
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.hide()
-		self.swResults.hide()
+		self.swResults.set_visible(isPaging)
+		self.vbCenter.set_child_packing(self.hbCenterError, not isPaging, False, 1, gtk.PACK_START)
 		self.hbCenterError.show()
 		
 	def onResultsPreExecute(self, title):
