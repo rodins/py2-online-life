@@ -645,7 +645,7 @@ class OnlineLifeGui(gtk.Window):
 		SIDE_SIZE = 220
 		SPINNER_SIZE = 32
 		self.vbLeft = gtk.VBox(False, 1)
-		vbCenter = gtk.VBox(False, 1)
+		self.vbCenter = gtk.VBox(False, 1)
 		vbRight = gtk.VBox(False, 1)
 		self.vbLeft.set_size_request(SIDE_SIZE, -1)
 		vbRight.set_size_request(SIDE_SIZE, -1)
@@ -689,6 +689,8 @@ class OnlineLifeGui(gtk.Window):
 		self.swResults = self.createScrolledWindow()
 		self.swResults.add(self.ivResults)
 		self.swResults.show_all()
+		vadj = self.swResults.get_vadjustment()
+		vadj.connect("value-changed", self.onResultsScrollToBottom)
 		
 		self.spCenter = gtk.Spinner()
 		self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -698,10 +700,10 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError = gtk.HBox(False, 1)
 		self.hbCenterError.pack_start(btnCenterError, True, False, 10)
 		
-		vbCenter.pack_start(self.swPlaylists, True, True, 1)
-		vbCenter.pack_start(self.swResults, True, True, 1)
-		vbCenter.pack_start(self.spCenter, True, False, 1)
-		vbCenter.pack_start(self.hbCenterError, True, False, 1)
+		self.vbCenter.pack_start(self.swPlaylists, True, True, 1)
+		self.vbCenter.pack_start(self.swResults, True, True, 1)
+		self.vbCenter.pack_start(self.spCenter, True, False, 1)
+		self.vbCenter.pack_start(self.hbCenterError, True, False, 1)
 		
 		# Add widgets to vbRight
 		lbInfo = gtk.Label("")
@@ -775,7 +777,7 @@ class OnlineLifeGui(gtk.Window):
 		vbRight.pack_start(frBackActors, True, True, 1)
 		
 		hbox.pack_start(self.vbLeft, False, False, 1)
-		hbox.pack_start(vbCenter, True, True, 1)
+		hbox.pack_start(self.vbCenter, True, True, 1)
 		hbox.pack_start(vbRight, False, False, 1)
 		
 		vbox.pack_start(hbox, True, True, 1)
@@ -783,7 +785,7 @@ class OnlineLifeGui(gtk.Window):
 		self.add(vbox)
 		vbox.show()
 		hbox.show()
-		vbCenter.show()
+		self.vbCenter.show()
 		self.show()
 		
 		self.categoriesThread = None
@@ -822,7 +824,7 @@ class OnlineLifeGui(gtk.Window):
 		
 	def addToDrop(self, title, href):
 		self.treestore.append(self.itDrop, [FILE_PIXBUF, title, href])
-		
+	#TODO: use on first item reseived not on post execute	
 	def onCategoriesPostExecute(self):
 		self.tvCategories.set_model(self.treestore)
 		self.showCategoriesData()
@@ -846,11 +848,12 @@ class OnlineLifeGui(gtk.Window):
 		    self.categoriesThread = CategoriesThread(self)
 		    self.categoriesThread.start()
 	
-	def showCenterSpinner(self):
+	def showCenterSpinner(self, isPaging):
 		self.spCenter.show()
 		self.spCenter.start()
 		self.swPlaylists.hide()
-		self.swResults.hide()
+		self.swResults.set_visible(isPaging)
+		self.vbCenter.set_child_packing(self.spCenter, not isPaging, False, 1, gtk.PACK_START)
 		self.hbCenterError.hide()
 		
 	def showResultsData(self):
@@ -867,22 +870,24 @@ class OnlineLifeGui(gtk.Window):
 		self.swResults.hide()
 		self.hbCenterError.hide()
 		
-	def showCenterError(self):
-		self.set_title(PROG_NAME + " - Error")
+	def showCenterError(self, title):
+		if(title != ""):
+		    self.set_title(PROG_NAME + " - Error")
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.hide()
 		self.swResults.hide()
 		self.hbCenterError.show()
 		
-	def onResultsPreExecute(self):
-		self.set_title(PROG_NAME + " - Loading...")
-		self.showCenterSpinner()
+	def onResultsPreExecute(self, title):
+		if(title != ""):
+		    self.set_title(PROG_NAME + " - Loading...")
+		self.showCenterSpinner(title == "")
 		
 	def onFirstItemReceived(self, title = ""):
 		if(title != ""):
 		    self.set_title(PROG_NAME + " - " + title)
-		self.createAndSetResultsModel()
+		    self.createAndSetResultsModel()
 		self.showResultsData()
 		
 	def createAndSetResultsModel(self):
@@ -893,10 +898,17 @@ class OnlineLifeGui(gtk.Window):
 		self.resultsStore.append([EMPTY_POSTER, title, href])
 		
 	def setResultsNextLink(self, link):
-		self.nextLink = link
+		self.resultsNextLink = link
 		
-	def onResultsPostExecute(self):
-		pass
+	def onResultsScrollToBottom(self, adj):
+		value = adj.get_value()
+		upper = adj.get_upper()
+		page_size = adj.get_page_size()
+		max_value = value + page_size + page_size
+		if(max_value > upper):
+			if(not self.resultsThread.is_alive() and self.resultsNextLink != ""):
+				self.resultsThread = ResultsThread(self, self.resultsNextLink)
+				self.resultsThread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -1059,7 +1071,7 @@ class ResultsThread(threading.Thread):
 		threading.Thread.__init__(self)
 	
 	def run(self):
-		gobject.idle_add(self.gui.onResultsPreExecute)	
+		gobject.idle_add(self.gui.onResultsPreExecute, self.title)	
 		try:
 			poster_found = False
 			poster = ""
@@ -1116,10 +1128,10 @@ class ResultsThread(threading.Thread):
 						poster = line
 					else:
 					    poster += line
-					
+			gobject.idle_add(self.gui.setResultsNextLink, "")		
 		except Exception as ex:
 			print(ex)
-			gobject.idle_add(self.gui.showCenterError)
+			gobject.idle_add(self.gui.showCenterError, self.title)
 			
 	def cancel(self):
 		self.isCancelled = True
