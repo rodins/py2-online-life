@@ -791,6 +791,8 @@ class OnlineLifeGui(gtk.Window):
 		self.categoriesThread = None
 		self.resultsThread = None
 		
+		self.base_search_url = ""
+		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
 	    self.spCategories.start()
@@ -899,16 +901,25 @@ class OnlineLifeGui(gtk.Window):
 	def addToResultsModel(self, title, href, image):
 		self.resultsStore.append([EMPTY_POSTER, title, href])
 		
+	def create_search_link(self, page):
+		if self.base_search_url != "":
+			return self.base_search_url + "&search_start=" + page
+		else:
+			return page
+		
 	def setResultsNextLink(self, link):
-		self.resultsNextLink = link
+		if link != "":
+		    self.resultsNextLink = create_search_link(link, self.base_search_url)
+		else:
+			self.resultsNextLink = ""
 		
 	def onResultsScrollToBottom(self, adj):
 		value = adj.get_value()
 		upper = adj.get_upper()
 		page_size = adj.get_page_size()
 		max_value = value + page_size + page_size
-		if(max_value > upper):
-			if(not self.resultsThread.is_alive() and self.resultsNextLink != ""):
+		if max_value > upper:
+			if not self.resultsThread.is_alive() and self.resultsNextLink != "":
 				self.resultsThread = ResultsThread(self, self.resultsNextLink)
 				self.resultsThread.start()
 		
@@ -928,7 +939,18 @@ class OnlineLifeGui(gtk.Window):
 		print("btnNext clicked")
 		
 	def entryActivated(self, widget):
-		print("entry activated")
+		query = widget.get_text().strip()
+		if query != "":
+			data = {}
+			data['do'] = 'search'
+			data['subaction'] = 'search'
+			data['mode'] = 'simple'
+			data['story'] = query.encode('cp1251')
+			url_values = urllib.urlencode(data)
+			self.base_search_url = DOMAIN + "?" + url_values
+			if self.resultsThread == None or not self.resultsThread.is_alive():
+				self.resultsThread = ResultsThread(self, self.base_search_url, query)
+				self.resultsThread.start()
 		
 	def btnActorsClicked(self, widget):
 		print("btnActors clicked")
@@ -1163,6 +1185,7 @@ class ResultsThread(threading.Thread):
 			title = anchor[title_begin+1:].decode('cp1251')
 			if title == u"Вперед":
 				next_page = self.parse_pager_href(anchor)
+				break
 			
 			anchor_begin = pager.find("<a", anchor_end)
 			anchor_end = pager.find("</a>", anchor_begin)
