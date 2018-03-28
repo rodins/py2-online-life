@@ -876,7 +876,7 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.show()
 		
 	def onResultsPreExecute(self):
-		self.set_title(PROG_NAME + " - Loading")
+		self.set_title(PROG_NAME + " - Loading...")
 		self.showCenterSpinner()
 		
 	def onFirstItemReceived(self, title = ""):
@@ -928,9 +928,15 @@ class OnlineLifeGui(gtk.Window):
 		
 	def tvCategoriesRowActivated(self, treeview, path, view_column):
 		model = treeview.get_model()
-		iter = model.get_iter(path)
-		values = model.get(iter, 1, 2) # 0 column is icon
-		self.resultsThread = ResultsThread(self, values)
+		iter_child = model.get_iter(path)
+		values = model.get(iter_child, 1, 2) # 0 column is icon
+		iter_parent = model.iter_parent(iter_child)
+		title = values[0]
+		link = values[1]
+		if(iter_parent != None):
+			values_parent = model.get(iter_parent, 1)
+			title = values_parent[0] + " - " + title
+		self.resultsThread = ResultsThread(self, link, title)
 		self.resultsThread.start()
 		
 	def createTreeView(self):
@@ -1042,10 +1048,10 @@ class CategoriesThread(threading.Thread):
 					
 class ResultsThread(threading.Thread):
 	
-	def __init__(self, gui, values):
+	def __init__(self, gui, link, title = ""):
 		self.gui = gui
-		self.title = values[0]
-		self.link = values[1]
+		self.title = title
+		self.link = link
 		self.isCancelled = False
 		threading.Thread.__init__(self)
 	
