@@ -15,6 +15,7 @@ import threading
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
 DOMAIN_NO_SUFFIX = "www.online-life."
+PROG_NAME = "Online life"
 
 COL_PIXBUF = 0
 COL_TEXT = 1
@@ -558,7 +559,7 @@ class OnlineLifeGui(gtk.Window):
 	def __init__(self):
 		super(OnlineLifeGui, self).__init__()
 		
-		self.set_title("Online Life")
+		self.set_title(PROG_NAME)
 		self.connect("destroy", self.onDestroy)
 		self.set_border_width(5)
 		self.set_size_request(700, 400)
@@ -867,6 +868,7 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.hide()
 		
 	def showCenterError(self):
+		self.set_title(PROG_NAME + " - Error")
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.hide()
@@ -874,9 +876,12 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.show()
 		
 	def onResultsPreExecute(self):
+		self.set_title(PROG_NAME + " - Loading")
 		self.showCenterSpinner()
 		
-	def onFirstItemReceived(self):
+	def onFirstItemReceived(self, title = ""):
+		if(title != ""):
+		    self.set_title(PROG_NAME + " - " + title)
 		self.createAndSetResultsModel()
 		self.showResultsData()
 		
@@ -1090,7 +1095,7 @@ class ResultsThread(threading.Thread):
 						if href_begin != -1 and href_end != -1:
 							href = poster[href_begin+6: href_end+5]
 							if(count == 1):
-								gobject.idle_add(self.gui.onFirstItemReceived)
+								gobject.idle_add(self.gui.onFirstItemReceived, self.title)
 							
 			                image = ""
 			                gobject.idle_add(self.gui.addToResultsModel, title, href, image)
