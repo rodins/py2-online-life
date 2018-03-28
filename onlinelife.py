@@ -1133,7 +1133,7 @@ class ResultsThread(threading.Thread):
 						if title_new_line != -1:
 							title = title[:title_new_line]
 						count += 1
-						
+
 						href_begin = poster.find("href=")
 						href_end = poster.find(".html", href_begin+1)
 						
@@ -1143,9 +1143,13 @@ class ResultsThread(threading.Thread):
 								gobject.idle_add(self.gui.onFirstItemReceived, self.title)
 							
 			                image = ""
+			                image_begin = poster.find("<img")
+			                image_end = poster.find(".jpg", image_begin)
+			                if image_begin != -1 and image_end != -1:
+								image = poster[image_begin+10: image_end+4]
+								
 			                gobject.idle_add(self.gui.addToResultsModel, title, href, image)
 			                
-							#TODO: detect poster image
 					poster = ""
 				elif poster_found:
 					if poster == "":
