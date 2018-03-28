@@ -901,15 +901,12 @@ class OnlineLifeGui(gtk.Window):
 	def addToResultsModel(self, title, href, image):
 		self.resultsStore.append([EMPTY_POSTER, title, href])
 		
-	def create_search_link(self, page):
-		if self.base_search_url != "":
-			return self.base_search_url + "&search_start=" + page
-		else:
-			return page
-		
 	def setResultsNextLink(self, link):
 		if link != "":
-		    self.resultsNextLink = create_search_link(link, self.base_search_url)
+			if link.find("http") == -1:
+				self.resultsNextLink = self.base_search_url + "&search_start=" + link
+			else:
+				self.resultsNextLink = link
 		else:
 			self.resultsNextLink = ""
 		
