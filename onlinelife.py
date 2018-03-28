@@ -892,6 +892,9 @@ class OnlineLifeGui(gtk.Window):
 	def addToResultsModel(self, title, href, image):
 		self.resultsStore.append([EMPTY_POSTER, title, href])
 		
+	def setResultsNextLink(self, link):
+		self.nextLink = link
+		
 	def onResultsPostExecute(self):
 		pass
 		
@@ -1076,8 +1079,8 @@ class ResultsThread(threading.Thread):
 				if pager_begin != -1 and not poster_found:
 					pager = line[pager_begin:]
 					next_page = self.parse_pager(pager)
-					print("Next page: " + next_page)
-					return #(results, prev_page, next_page)
+					gobject.idle_add(self.gui.setResultsNextLink, next_page)
+					return
 				
 				if poster_begin != -1:
 					poster_found = True
