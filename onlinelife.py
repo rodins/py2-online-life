@@ -791,7 +791,6 @@ class OnlineLifeGui(gtk.Window):
 		self.categoriesThread = None
 		self.resultsThread = None
 		
-		self.base_search_url = ""
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -874,7 +873,7 @@ class OnlineLifeGui(gtk.Window):
 		
 	def showCenterError(self, title):
 		isPaging = (title == "")
-		if(not isPaging):
+		if not isPaging:
 		    self.set_title(PROG_NAME + " - Error")
 		self.spCenter.hide()
 		self.spCenter.stop()
@@ -884,12 +883,12 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.show()
 		
 	def onResultsPreExecute(self, title):
-		if(title != ""):
+		if title != "":
 		    self.set_title(PROG_NAME + " - Loading...")
 		self.showCenterSpinner(title == "")
 		
 	def onFirstItemReceived(self, title = ""):
-		if(title != ""):
+		if title != "":
 		    self.set_title(PROG_NAME + " - " + title)
 		    self.createAndSetResultsModel()
 		self.showResultsData()
@@ -904,7 +903,7 @@ class OnlineLifeGui(gtk.Window):
 	def setResultsNextLink(self, link):
 		if link != "":
 			if link.find("http") == -1:
-				self.resultsNextLink = self.base_search_url + "&search_start=" + link
+				self.resultsNextLink = self.get_search_link(link)
 			else:
 				self.resultsNextLink = link
 		else:
@@ -935,18 +934,23 @@ class OnlineLifeGui(gtk.Window):
 	def btnNextClicked(self, widget):
 		print("btnNext clicked")
 		
+	def get_search_link(self, page = ""):
+		data = {}
+		data['do'] = 'search'
+		data['subaction'] = 'search'
+		data['mode'] = 'simple'
+		data['story'] = self.query.encode('cp1251')
+		if page != "":
+		    data['search_start'] = page
+		url_values = urllib.urlencode(data)
+		return DOMAIN + "?" + url_values
+		
 	def entryActivated(self, widget):
 		query = widget.get_text().strip()
 		if query != "":
-			data = {}
-			data['do'] = 'search'
-			data['subaction'] = 'search'
-			data['mode'] = 'simple'
-			data['story'] = query.encode('cp1251')
-			url_values = urllib.urlencode(data)
-			self.base_search_url = DOMAIN + "?" + url_values
+			self.query = query
 			if self.resultsThread == None or not self.resultsThread.is_alive():
-				self.resultsThread = ResultsThread(self, self.base_search_url, query)
+				self.resultsThread = ResultsThread(self, self.get_search_link(), query)
 				self.resultsThread.start()
 		
 	def btnActorsClicked(self, widget):
