@@ -892,6 +892,7 @@ class OnlineLifeGui(gtk.Window):
 		    self.set_title(PROG_NAME + " - " + title)
 		    self.createAndSetResultsModel()
 		self.showResultsData()
+		self.getResultsVisibleRange()
 		
 	def createAndSetResultsModel(self):
 		self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
@@ -908,8 +909,16 @@ class OnlineLifeGui(gtk.Window):
 				self.resultsNextLink = link
 		else:
 			self.resultsNextLink = ""
+	
+	def getResultsVisibleRange(self):
+		print("Get visible range...")
+		visible_range = self.ivResults.get_visible_range()
+		if visible_range != None:
+			print("From: " + str(visible_range[0]))
+			print("to: " + str(visible_range[1]))
 		
 	def onResultsScrollToBottom(self, adj):
+		self.getResultsVisibleRange();
 		value = adj.get_value()
 		upper = adj.get_upper()
 		page_size = adj.get_page_size()
