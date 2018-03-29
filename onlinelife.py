@@ -691,6 +691,7 @@ class OnlineLifeGui(gtk.Window):
 		self.swResults.show_all()
 		vadj = self.swResults.get_vadjustment()
 		vadj.connect("value-changed", self.onResultsScrollToBottom)
+		self.ivResults.connect("expose-event", self.onResultsDraw)
 		
 		self.spCenter = gtk.Spinner()
 		self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -790,6 +791,8 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.categoriesThread = None
 		self.resultsThread = None
+		
+		self.rangeRepeatSet = set()
 		
 		
 	def showCategoriesSpinner(self):
@@ -891,8 +894,8 @@ class OnlineLifeGui(gtk.Window):
 		if title != "":
 		    self.set_title(PROG_NAME + " - " + title)
 		    self.createAndSetResultsModel()
+		    self.rangeRepeatSet.clear()
 		self.showResultsData()
-		self.getResultsVisibleRange()
 		
 	def createAndSetResultsModel(self):
 		self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
@@ -910,15 +913,20 @@ class OnlineLifeGui(gtk.Window):
 		else:
 			self.resultsNextLink = ""
 	
-	def getResultsVisibleRange(self):
-		print("Get visible range...")
+	def onResultsDraw(self, widget, event):
 		visible_range = self.ivResults.get_visible_range()
 		if visible_range != None:
-			print("From: " + str(visible_range[0]))
-			print("to: " + str(visible_range[1]))
+			indexFrom = visible_range[0][0]
+			indexTo = visible_range[1][0]
+			
+			for index in range(indexFrom, indexTo):
+				if index not in self.rangeRepeatSet:
+					self.rangeRepeatSet.add(index)
+					# Get image link from model on index
+					image = self.resultsStore[index][3] # 3 - image link in model
+					print image
 		
 	def onResultsScrollToBottom(self, adj):
-		self.getResultsVisibleRange();
 		value = adj.get_value()
 		upper = adj.get_upper()
 		page_size = adj.get_page_size()
