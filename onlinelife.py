@@ -894,11 +894,11 @@ class OnlineLifeGui(gtk.Window):
 		self.showResultsData()
 		
 	def createAndSetResultsModel(self):
-		self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
+		self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
 		self.ivResults.set_model(self.resultsStore) 
 		
 	def addToResultsModel(self, title, href, image):
-		self.resultsStore.append([EMPTY_POSTER, title, href])
+		self.resultsStore.append([EMPTY_POSTER, title, href, image])
 		
 	def setResultsNextLink(self, link):
 		if link != "":
