@@ -795,6 +795,9 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.rangeRepeatSet = set()
 		
+		self.imageWidth = "165"
+		self.imageHeight = "236"
+		
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -932,7 +935,7 @@ class OnlineLifeGui(gtk.Window):
 					self.rangeRepeatSet.add(index)
 					# Get image link from model on index
 					row = self.resultsStore[index]
-					image = row[3] # 3 - image link in model
+					image = self.get_image_link(row[3]) # 3 - image link in model
 					print image
 		
 	def onResultsScrollToBottom(self, adj):
@@ -970,6 +973,14 @@ class OnlineLifeGui(gtk.Window):
 		    data['search_start'] = page
 		url_values = urllib.urlencode(data)
 		return DOMAIN + "?" + url_values
+		
+	def get_image_link(self, image):
+		data = {}
+		data['w'] = self.imageWidth
+		data['h'] = self.imageHeight
+		data['zc'] = '1'
+		url_values = urllib.urlencode(data)
+		return image + "?" + url_values
 		
 	def entryActivated(self, widget):
 		query = widget.get_text().strip()
