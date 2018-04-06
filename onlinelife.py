@@ -697,6 +697,7 @@ class OnlineLifeGui(gtk.Window):
 		self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnCenterError = gtk.Button("Repeat")
+		btnCenterError.connect("clicked", self.btnCenterErrorClicked)
 		btnCenterError.show()
 		self.hbCenterError = gtk.HBox(False, 1)
 		self.hbCenterError.pack_start(btnCenterError, True, False, 10)
@@ -885,6 +886,13 @@ class OnlineLifeGui(gtk.Window):
 		self.vbCenter.set_child_packing(self.hbCenterError, not isPaging, False, 1, gtk.PACK_START)
 		self.hbCenterError.show()
 		
+	def btnCenterErrorClicked(self, widget):
+		if not self.resultsThread.is_alive():
+			self.resultsThread = ResultsThread(self,
+			                                   self.resultsThread.link,
+			                                   self.resultsThread.title)
+			self.resultsThread.start()
+		
 	def onResultsPreExecute(self, title):
 		if title != "":
 		    self.set_title(PROG_NAME + " - Loading...")
@@ -923,7 +931,8 @@ class OnlineLifeGui(gtk.Window):
 				if index not in self.rangeRepeatSet:
 					self.rangeRepeatSet.add(index)
 					# Get image link from model on index
-					image = self.resultsStore[index][3] # 3 - image link in model
+					row = self.resultsStore[index]
+					image = row[3] # 3 - image link in model
 					print image
 		
 	def onResultsScrollToBottom(self, adj):
