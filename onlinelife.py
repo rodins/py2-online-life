@@ -794,9 +794,7 @@ class OnlineLifeGui(gtk.Window):
 		self.resultsThread = None
 		
 		self.rangeRepeatSet = set()
-		
-		self.imageWidth = "165"
-		self.imageHeight = "236"
+		self.imagesCache = {}
 		
 		
 	def showCategoriesSpinner(self):
@@ -935,8 +933,12 @@ class OnlineLifeGui(gtk.Window):
 					self.rangeRepeatSet.add(index)
 					# Get image link from model on index
 					row = self.resultsStore[index]
-					image = self.get_image_link(row[3]) # 3 - image link in model
-					print image
+					link = row[3] # 3 - image link in model
+					if link not in self.imagesCache:
+					    imageThread = ImageThread(link, row, self.imagesCache)
+					    imageThread.start()
+					else:
+						row[0] = self.imagesCache[link]
 		
 	def onResultsScrollToBottom(self, adj):
 		value = adj.get_value()
@@ -973,14 +975,6 @@ class OnlineLifeGui(gtk.Window):
 		    data['search_start'] = page
 		url_values = urllib.urlencode(data)
 		return DOMAIN + "?" + url_values
-		
-	def get_image_link(self, image):
-		data = {}
-		data['w'] = self.imageWidth
-		data['h'] = self.imageHeight
-		data['zc'] = '1'
-		url_values = urllib.urlencode(data)
-		return image + "?" + url_values
 		
 	def entryActivated(self, widget):
 		query = widget.get_text().strip()
@@ -1233,6 +1227,52 @@ class ResultsThread(threading.Thread):
 			anchor_end = pager.find("</a>", anchor_begin)
 			
 		return next_page
+		
+class ImageThread(threading.Thread):
+	
+	def __init__(self, link, row, imagesCache):
+		self.imagesCache = imagesCache
+		self.link = link
+		self.row = row
+		self.imageWidth = "165"
+		self.imageHeight = "236"
+		self.pixbufLoader = gtk.gdk.PixbufLoader()
+		self.pixbufLoader.connect("area-prepared", self.pixbufLoaderPrepared)
+		self.pixbufLoader.connect("size-prepared", self.pixbufLoaderSizePrepared)
+		threading.Thread.__init__(self)
+		
+	def onPostExecute(self, pixbuf):
+		self.pixbufLoader.close()
+		
+	def pixbufLoaderPrepared(self, pixbufloader):
+		self.imagesCache[self.link] = pixbufloader.get_pixbuf()
+		self.row[0] = pixbufloader.get_pixbuf()
+		
+	def pixbufLoaderSizePrepared(self, pixbufloader, width, height):
+		pixbufloader.set_size(int(self.imageWidth), int(self.imageHeight))
+		
+	def writeToLoader(self, buf):
+		self.pixbufLoader.write(buf)
+		
+	def onError(self):
+		self.pixbufLoader.close()
+		
+	def get_image_link(self):
+		data = {}
+		data['h'] = self.imageHeight
+		data['w'] = self.imageWidth
+		data['zc'] = '1'
+		url_values = urllib.urlencode(data)
+		return self.link + "?" + url_values
+		
+	def run(self):
+		try:
+			response = urllib2.urlopen(self.get_image_link())
+			for buf in response:
+				gobject.idle_add(self.writeToLoader, buf)
+			gobject.idle_add(self.onPostExecute, None)
+		except Exception as ex:
+			gobject.idle_add(self.onError)
 		
 def main():
 	gobject.threads_init()
