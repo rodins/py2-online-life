@@ -911,7 +911,10 @@ class OnlineLifeGui(gtk.Window):
 		self.ivResults.set_model(self.resultsStore) 
 		
 	def addToResultsModel(self, title, href, image):
-		self.resultsStore.append([EMPTY_POSTER, title, href, image])
+		if image in self.imagesCache:
+			self.resultsStore.append([self.imagesCache[image], title, href, image])
+		else:
+		    self.resultsStore.append([EMPTY_POSTER, title, href, image])
 		
 	def setResultsNextLink(self, link):
 		if link != "":
@@ -937,8 +940,6 @@ class OnlineLifeGui(gtk.Window):
 					if link not in self.imagesCache:
 					    imageThread = ImageThread(link, row, self.imagesCache)
 					    imageThread.start()
-					else:
-						row[0] = self.imagesCache[link]
 		
 	def onResultsScrollToBottom(self, adj):
 		value = adj.get_value()
