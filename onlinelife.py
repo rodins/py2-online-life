@@ -900,6 +900,7 @@ class OnlineLifeGui(gtk.Window):
 		if title != "":
 		    self.set_title(PROG_NAME + " - Loading...")
 		    self.cancelImageThreads()
+		    self.resultsNextLink = ""
 		self.showCenterSpinner(title == "")
 		
 	def onFirstItemReceived(self, title = ""):
