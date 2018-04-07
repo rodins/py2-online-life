@@ -934,7 +934,7 @@ class OnlineLifeGui(gtk.Window):
 		if visible_range != None:
 			indexFrom = visible_range[0][0]
 			indexTo = visible_range[1][0]
-			indexTo += indexTo - indexFrom
+			indexTo += indexTo - indexFrom +1
 			# Load images for items not in visible range yet
 			if indexTo >= len(self.resultsStore):
 				indexTo = len(self.resultsStore)
