@@ -11,6 +11,7 @@ import urllib2
 import sys
 from subprocess import call
 import threading
+from HTMLParser import HTMLParser
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -1143,7 +1144,9 @@ class ResultsThread(threading.Thread):
 		threading.Thread.__init__(self)
 	
 	def run(self):
-		gobject.idle_add(self.gui.onResultsPreExecute, self.title)	
+		gobject.idle_add(self.gui.onResultsPreExecute, self.title)
+		# TODO: use html parser to parse results	
+		h = HTMLParser()
 		try:
 			poster_found = False
 			poster = ""
@@ -1180,6 +1183,8 @@ class ResultsThread(threading.Thread):
 						title_new_line = title.find('\n')
 						if title_new_line != -1:
 							title = title[:title_new_line]
+							
+						title = h.unescape(title)
 						count += 1
 
 						href_begin = poster.find("href=")
