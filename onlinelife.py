@@ -795,6 +795,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.rangeRepeatSet = set()
 		self.imagesCache = {}
+		self.imageThreads = []
 		
 		
 	def showCategoriesSpinner(self):
@@ -897,6 +898,7 @@ class OnlineLifeGui(gtk.Window):
 	def onResultsPreExecute(self, title):
 		if title != "":
 		    self.set_title(PROG_NAME + " - Loading...")
+		    self.cancelImageThreads()
 		self.showCenterSpinner(title == "")
 		
 	def onFirstItemReceived(self, title = ""):
@@ -930,6 +932,10 @@ class OnlineLifeGui(gtk.Window):
 		if visible_range != None:
 			indexFrom = visible_range[0][0]
 			indexTo = visible_range[1][0]
+			indexTo += indexTo - indexFrom
+			# Load images for items not in visible range yet
+			if indexTo >= len(self.resultsStore):
+				indexTo = len(self.resultsStore)
 			
 			for index in range(indexFrom, indexTo):
 				if index not in self.rangeRepeatSet:
@@ -937,9 +943,17 @@ class OnlineLifeGui(gtk.Window):
 					# Get image link from model on index
 					row = self.resultsStore[index]
 					link = row[3] # 3 - image link in model
-					if link not in self.imagesCache:
+					if link != "" and link not in self.imagesCache:
 					    imageThread = ImageThread(link, row, self.imagesCache)
+					    self.imageThreads.append(imageThread)
 					    imageThread.start()
+	
+	def cancelImageThreads(self):
+		for thread in self.imageThreads:
+			if thread.is_alive():
+			    print "Cancelling thread..."
+			    thread.cancel()
+		self.imageThreads = []
 		
 	def onResultsScrollToBottom(self, adj):
 		value = adj.get_value()
@@ -996,6 +1010,7 @@ class OnlineLifeGui(gtk.Window):
 			self.categoriesThread.cancel()
 		if self.resultsThread != None and self.resultsThread.is_alive:
 			self.resultsThread.cancel()
+		self.cancelImageThreads()
 		gtk.main_quit()
 		
 	def tvCategoriesRowActivated(self, treeview, path, view_column):
@@ -1240,13 +1255,10 @@ class ImageThread(threading.Thread):
 		self.pixbufLoader = gtk.gdk.PixbufLoader()
 		self.pixbufLoader.connect("area-prepared", self.pixbufLoaderPrepared)
 		self.pixbufLoader.connect("size-prepared", self.pixbufLoaderSizePrepared)
+		self.isCancelled = False
 		threading.Thread.__init__(self)
 		
-	def onPostExecute(self, pixbuf):
-		self.pixbufLoader.close()
-		
 	def pixbufLoaderPrepared(self, pixbufloader):
-		self.imagesCache[self.link] = pixbufloader.get_pixbuf()
 		self.row[0] = pixbufloader.get_pixbuf()
 		
 	def pixbufLoaderSizePrepared(self, pixbufloader, width, height):
@@ -1255,7 +1267,14 @@ class ImageThread(threading.Thread):
 	def writeToLoader(self, buf):
 		self.pixbufLoader.write(buf)
 		
+	def onSuccess(self):
+		if not self.isCancelled:
+			self.imagesCache[self.link] = self.pixbufLoader.get_pixbuf()
+		
 	def onError(self):
+		print "on error"
+		
+	def onPostExecute(self):
 		self.pixbufLoader.close()
 		
 	def get_image_link(self):
@@ -1266,14 +1285,21 @@ class ImageThread(threading.Thread):
 		url_values = urllib.urlencode(data)
 		return self.link + "?" + url_values
 		
+	def cancel(self):
+		self.isCancelled = True
+		
 	def run(self):
 		try:
 			response = urllib2.urlopen(self.get_image_link())
 			for buf in response:
+				if self.isCancelled:
+					break 
 				gobject.idle_add(self.writeToLoader, buf)
-			gobject.idle_add(self.onPostExecute, None)
+			gobject.idle_add(self.onSuccess)
 		except Exception as ex:
+			print ex
 			gobject.idle_add(self.onError)
+		gobject.idle_add(self.onPostExecute)
 		
 def main():
 	gobject.threads_init()
