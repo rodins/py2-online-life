@@ -1260,15 +1260,11 @@ class ImageThread(threading.Thread):
 		self.imageHeight = "236"
 		self.pixbufLoader = gtk.gdk.PixbufLoader()
 		self.pixbufLoader.connect("area-prepared", self.pixbufLoaderPrepared)
-		self.pixbufLoader.connect("size-prepared", self.pixbufLoaderSizePrepared)
 		self.isCancelled = False
 		threading.Thread.__init__(self)
 		
 	def pixbufLoaderPrepared(self, pixbufloader):
 		self.row[0] = pixbufloader.get_pixbuf()
-		
-	def pixbufLoaderSizePrepared(self, pixbufloader, width, height):
-		pixbufloader.set_size(int(self.imageWidth), int(self.imageHeight))
 		
 	def writeToLoader(self, buf):
 		self.pixbufLoader.write(buf)
@@ -1289,7 +1285,7 @@ class ImageThread(threading.Thread):
 		data['w'] = self.imageWidth
 		data['zc'] = '1'
 		url_values = urllib.urlencode(data)
-		return self.link + "?" + url_values
+		return self.link + "&" + url_values
 		
 	def cancel(self):
 		self.isCancelled = True
