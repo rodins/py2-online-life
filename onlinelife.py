@@ -693,6 +693,7 @@ class OnlineLifeGui(gtk.Window):
 		vadj = self.swResults.get_vadjustment()
 		vadj.connect("value-changed", self.onResultsScrollToBottom)
 		self.ivResults.connect("expose-event", self.onResultsDraw)
+		self.ivResults.connect("item-activated", self.onResultActivated)
 		
 		self.spCenter = gtk.Spinner()
 		self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -970,6 +971,13 @@ class OnlineLifeGui(gtk.Window):
 			if not self.resultsThread.is_alive() and self.resultsNextLink != "":
 				self.resultsThread = ResultsThread(self, self.resultsNextLink)
 				self.resultsThread.start()
+	
+	def onResultActivated(self, iconview, path):
+		resultsIter = self.resultsStore.get_iter(path)
+		title = self.resultsStore.get_value(resultsIter, 1)
+		link = self.resultsStore.get_value(resultsIter, 2)
+		print "Title: " + title
+		print "Link: " + link
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
