@@ -592,11 +592,11 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.insert(btnSavedItems, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
-		btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
-		btnRefresh.set_tooltip_text("Update results")
-		btnRefresh.connect("clicked", self.btnRefreshClicked)
-		btnRefresh.set_sensitive(False)
-		toolbar.insert(btnRefresh, -1)
+		self.btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
+		self.btnRefresh.set_tooltip_text("Update results")
+		self.btnRefresh.connect("clicked", self.btnRefreshClicked)
+		self.btnRefresh.set_sensitive(False)
+		toolbar.insert(self.btnRefresh, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
@@ -832,6 +832,7 @@ class OnlineLifeGui(gtk.Window):
 		
 	def addToDrop(self, title, href):
 		self.treestore.append(self.itDrop, [FILE_PIXBUF, title, href])
+		
 	#TODO: use on first item reseived not on post execute	
 	def onCategoriesPostExecute(self):
 		self.tvCategories.set_model(self.treestore)
@@ -857,6 +858,7 @@ class OnlineLifeGui(gtk.Window):
 		    self.categoriesThread.start()
 	
 	def showCenterSpinner(self, isPaging):
+		self.btnRefresh.set_sensitive(False)
 		self.spCenter.show()
 		self.spCenter.start()
 		self.swPlaylists.hide()
@@ -865,6 +867,7 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.hide()
 		
 	def showResultsData(self):
+		self.btnRefresh.set_sensitive(True)
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.hide()
@@ -919,6 +922,11 @@ class OnlineLifeGui(gtk.Window):
 			self.resultsStore.append([self.imagesCache[image], title, href, image])
 		else:
 		    self.resultsStore.append([EMPTY_POSTER, title, href, image])
+	
+	def scrollToTopOfList(self):
+		firstIter = self.resultsStore.get_iter_first()
+		firstPath = self.resultsStore.get_path(firstIter)
+		self.ivResults.scroll_to_path(firstPath, False, 0, 0)
 		
 	def setResultsNextLink(self, link):
 		if link != "":
@@ -971,7 +979,11 @@ class OnlineLifeGui(gtk.Window):
 		print("btnSavedItems clicked")
 		
 	def btnRefreshClicked(self, widget):
-		print("btnRefresh clicked")
+		if not self.resultsThread.is_alive():
+			self.resultsThread = ResultsThread(self,
+			                                   self.resultsLink,
+			                                   self.resultsTitle)
+			self.resultsThread.start()
 		
 	def btnUpClicked(self, widget):
 		print("btnUp clicked")
@@ -997,8 +1009,10 @@ class OnlineLifeGui(gtk.Window):
 		query = widget.get_text().strip()
 		if query != "":
 			self.query = query
+			self.resultsTitle = query
+			self.resultsLink = self.get_search_link()
 			if self.resultsThread == None or not self.resultsThread.is_alive():
-				self.resultsThread = ResultsThread(self, self.get_search_link(), query)
+				self.resultsThread = ResultsThread(self, self.resultsLink, query)
 				self.resultsThread.start()
 		
 	def btnActorsClicked(self, widget):
@@ -1025,6 +1039,8 @@ class OnlineLifeGui(gtk.Window):
 		if(iter_parent != None):
 			values_parent = model.get(iter_parent, 1)
 			title = values_parent[0] + " - " + title
+		self.resultsTitle = title
+		self.resultsLink = link
 		self.resultsThread = ResultsThread(self, link, title)
 		self.resultsThread.start()
 		
@@ -1203,6 +1219,9 @@ class ResultsThread(threading.Thread):
 								image = poster[image_begin+10: image_end+4]
 								
 			                gobject.idle_add(self.gui.addToResultsModel, title, href, image)
+			                # self.title != "" on new results list, not paging  
+			                if(count == 1 and self.title != ""):
+								gobject.idle_add(self.gui.scrollToTopOfList)
 			                
 					poster = ""
 				elif poster_found:
