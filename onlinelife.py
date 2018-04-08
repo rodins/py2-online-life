@@ -942,10 +942,6 @@ class OnlineLifeGui(gtk.Window):
 		if visible_range != None:
 			indexFrom = visible_range[0][0]
 			indexTo = visible_range[1][0]
-			indexTo += indexTo - indexFrom +1
-			# Load images for items not in visible range yet
-			if indexTo >= len(self.resultsStore):
-				indexTo = len(self.resultsStore)
 			
 			for index in range(indexFrom, indexTo):
 				if index not in self.rangeRepeatSet:
@@ -1288,15 +1284,11 @@ class ImageThread(threading.Thread):
 	def writeToLoader(self, buf):
 		self.pixbufLoader.write(buf)
 		
-	def onSuccess(self):
-		if not self.isCancelled:
-			self.imagesCache[self.link] = self.pixbufLoader.get_pixbuf()
-		
-	def onError(self):
-		print "on error"
-		
 	def onPostExecute(self):
-		self.pixbufLoader.close()
+		if self.pixbufLoader.close():
+			self.imagesCache[self.link] = self.pixbufLoader.get_pixbuf()
+		else:
+			print "pixbuf error"
 		
 	def get_image_link(self):
 		data = {}
@@ -1316,10 +1308,8 @@ class ImageThread(threading.Thread):
 				if self.isCancelled:
 					break 
 				gobject.idle_add(self.writeToLoader, buf)
-			gobject.idle_add(self.onSuccess)
 		except Exception as ex:
 			print ex
-			gobject.idle_add(self.onError)
 		gobject.idle_add(self.onPostExecute)
 		
 def main():
