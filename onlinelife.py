@@ -794,6 +794,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		self.categoriesThread = None
 		self.resultsThread = None
+		self.actorsThread = None
 		
 		self.rangeRepeatSet = set()
 		self.imagesCache = {}
@@ -942,7 +943,7 @@ class OnlineLifeGui(gtk.Window):
 		visible_range = self.ivResults.get_visible_range()
 		if visible_range != None:
 			indexFrom = visible_range[0][0]
-			indexTo = visible_range[1][0]
+			indexTo = visible_range[1][0] + 1
 			
 			for index in range(indexFrom, indexTo):
 				if index not in self.rangeRepeatSet:
@@ -976,8 +977,9 @@ class OnlineLifeGui(gtk.Window):
 		resultsIter = self.resultsStore.get_iter(path)
 		title = self.resultsStore.get_value(resultsIter, 1)
 		link = self.resultsStore.get_value(resultsIter, 2)
-		print "Title: " + title
-		print "Link: " + link
+		if self.actorsThread == None or not self.actorsThread.is_alive():
+		    self.actorsThread = ActorsThread(self, link, title)
+		    self.actorsThread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -1319,6 +1321,64 @@ class ImageThread(threading.Thread):
 		except Exception as ex:
 			print ex
 		gobject.idle_add(self.onPostExecute)
+		
+class ActorsThread(threading.Thread):
+	def __init__(self, gui, link, title):
+		self.gui = gui
+		self.link = link
+		self.title = title
+		self.isCancelled = False
+		threading.Thread.__init__(self)
+		
+	def run(self):
+		parser = ActorsHTMLParser()
+		try:
+			response = urllib2.urlopen(self.link)
+			for line in response:
+			    parser.feed(line)
+		except Exception as ex:
+			print ex
+			
+class ActorsHTMLParser(HTMLParser):
+	def __init__(self):
+		self.isDirector = False
+		self.isActors = False
+		HTMLParser.__init__(self)
+	
+	def handle_starttag(self, tag, attrs):
+		self.tag = tag
+		if tag == "a":
+			for attr in attrs:
+				if attr[0] == "href":
+					self.href = attr[1]
+		elif tag == 'iframe':
+			print "iframe found"
+		
+	def handle_data(self, data):
+		data = data.strip()
+		if data != "" and data != ",":
+			utf_data = data.decode('cp1251')
+			if self.tag == 'a':
+				if self.isDirector:
+				    print utf_data + u" (режиссер)"
+				    self.isDirector = False
+				elif self.isActors:
+					print utf_data
+				    #print "Href:", self.href
+			elif self.tag == 'p':
+				if utf_data.find(u"Год:") != -1:
+					self.year = utf_data
+					print self.year
+				elif utf_data.find(u"Страна:") != -1:
+					self.country = utf_data
+					print self.country
+				elif utf_data.find(u"Режиссер:") != -1:
+					self.isDirector = True
+				elif utf_data.find(u"В ролях:") != -1:
+					self.isActors = True
+				elif utf_data.find(u"Премьера в мире") != -1:
+					self.isActors = False
+				
 		
 def main():
 	gobject.threads_init()
