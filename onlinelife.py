@@ -718,6 +718,7 @@ class OnlineLifeGui(gtk.Window):
 		self.frInfo.add(self.lbInfo)
 		
 		self.tvActors = self.createTreeView()
+		self.tvActors.connect("row-activated", self.tvActorsRowActivated)
 		swActors = self.createScrolledWindow()
 		swActors.add(self.tvActors)
 		swActors.show_all()
@@ -1020,6 +1021,14 @@ class OnlineLifeGui(gtk.Window):
 		
 	def addToActorsModel(self, name, href):
 		self.actorsStore.append([FILE_PIXBUF, name, href])
+		
+	def tvActorsRowActivated(self, treeview, path, view_column):
+		model = treeview.get_model()
+		actors_iter = model.get_iter(path)
+		values = model.get(actors_iter, 1, 2)
+		if self.resultsThread == None or not self.resultsThread.is_alive():
+		    self.resultsThread = ResultsThread(self, values[1], values[0])
+		    self.resultsThread.start()
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
