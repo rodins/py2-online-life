@@ -1296,7 +1296,9 @@ class ImageThread(threading.Thread):
 		
 	def onPostExecute(self):
 		if self.pixbufLoader.close():
-			self.imagesCache[self.link] = self.pixbufLoader.get_pixbuf()
+			pixbuf = self.pixbufLoader.get_pixbuf()
+			self.imagesCache[self.link] = pixbuf
+			self.row[0] = pixbuf
 		else:
 			print "pixbuf error"
 		
