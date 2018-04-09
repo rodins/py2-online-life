@@ -626,11 +626,11 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.insert(entryItem, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
-		btnActors = gtk.ToolButton(gtk.STOCK_INFO)
-		btnActors.set_tooltip_text("Show/hide info")
-		btnActors.connect("clicked", self.btnActorsClicked)
-		btnActors.set_sensitive(False)
-		toolbar.insert(btnActors, -1)
+		self.btnActors = gtk.ToolButton(gtk.STOCK_INFO)
+		self.btnActors.set_tooltip_text("Show/hide info")
+		self.btnActors.connect("clicked", self.btnActorsClicked)
+		self.btnActors.set_sensitive(False)
+		toolbar.insert(self.btnActors, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
@@ -647,9 +647,9 @@ class OnlineLifeGui(gtk.Window):
 		SPINNER_SIZE = 32
 		self.vbLeft = gtk.VBox(False, 1)
 		self.vbCenter = gtk.VBox(False, 1)
-		vbRight = gtk.VBox(False, 1)
+		self.vbRight = gtk.VBox(False, 1)
 		self.vbLeft.set_size_request(SIDE_SIZE, -1)
-		vbRight.set_size_request(SIDE_SIZE, -1)
+		self.vbRight.set_size_request(SIDE_SIZE, -1)
 		
 		# Add widgets to vbLeft
 		self.tvCategories = self.createTreeView()
@@ -710,24 +710,27 @@ class OnlineLifeGui(gtk.Window):
 		self.vbCenter.pack_start(self.hbCenterError, True, False, 1)
 		
 		# Add widgets to vbRight
-		lbInfo = gtk.Label("")
-		lbInfo.set_size_request(SIDE_SIZE, -1)
-		lbInfo.set_line_wrap(True)
-		frInfo = gtk.Frame("Info")
-		frInfo.add(lbInfo)
+		self.lbInfo = gtk.Label("")
+		self.lbInfo.set_size_request(SIDE_SIZE, -1)
+		self.lbInfo.set_line_wrap(True)
+		self.lbInfo.show()
+		self.frInfo = gtk.Frame("Info")
+		self.frInfo.add(self.lbInfo)
 		
-		tvActors = self.createTreeView()
+		self.tvActors = self.createTreeView()
 		swActors = self.createScrolledWindow()
-		swActors.add(tvActors)
-		frActors = gtk.Frame("Actors")
-		frActors.add(swActors)
+		swActors.add(self.tvActors)
+		swActors.show_all()
+		self.frActors = gtk.Frame("Actors")
+		self.frActors.add(swActors)
 		
-		spActors = gtk.Spinner()
-		spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
+		self.spActors = gtk.Spinner()
+		self.spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnActorsError = gtk.Button("Repeat")
-		hbActorsError = gtk.HBox(False, 1)
-		hbActorsError.pack_start(btnActorsError, True, False, 10)
+		btnActorsError.show()
+		self.hbActorsError = gtk.HBox(False, 1)
+		self.hbActorsError.pack_start(btnActorsError, True, False, 10)
 		
 		spLinks = gtk.Spinner()
 		spLinks.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -773,16 +776,16 @@ class OnlineLifeGui(gtk.Window):
 		frBackActors = gtk.Frame("Actors history")
 		frBackActors.add(swBackActors)
 		
-		vbRight.pack_start(frInfo, False, False, 1)
-		vbRight.pack_start(frActors, False, False, 1)
-		vbRight.pack_start(spActors, True, False, 1)
-		vbRight.pack_start(hbActorsError, True, False, 1)
-		vbRight.pack_start(frActions, False, False, 1)
-		vbRight.pack_start(frBackActors, True, True, 1)
+		self.vbRight.pack_start(self.frInfo, False, False, 1)
+		self.vbRight.pack_start(self.frActors, True, True, 1)
+		self.vbRight.pack_start(self.spActors, True, False, 1)
+		self.vbRight.pack_start(self.hbActorsError, True, False, 1)
+		self.vbRight.pack_start(frActions, False, False, 1)
+		self.vbRight.pack_start(frBackActors, True, True, 1)
 		
 		hbox.pack_start(self.vbLeft, False, False, 1)
 		hbox.pack_start(self.vbCenter, True, True, 1)
-		hbox.pack_start(vbRight, False, False, 1)
+		hbox.pack_start(self.vbRight, False, False, 1)
 		
 		vbox.pack_start(hbox, True, True, 1)
 		
@@ -978,8 +981,45 @@ class OnlineLifeGui(gtk.Window):
 		title = self.resultsStore.get_value(resultsIter, 1)
 		link = self.resultsStore.get_value(resultsIter, 2)
 		if self.actorsThread == None or not self.actorsThread.is_alive():
-		    self.actorsThread = ActorsThread(self, link, title)
-		    self.actorsThread.start()
+			self.onActorsPreExecute()
+			self.actorsThread = ActorsThread(self, link, title)
+			self.actorsThread.start()
+		    
+	def showActorsSpinner(self):
+		self.btnActors.set_sensitive(True)
+		self.vbRight.show()
+		self.spActors.show()
+		self.spActors.start()
+		self.frInfo.hide()
+		self.frActors.hide()
+		self.hbActorsError.hide()
+		
+	def showActorsData(self):
+		self.spActors.stop()
+		self.spActors.hide()
+		self.frInfo.show()
+		self.frActors.show()
+		self.hbActorsError.hide()
+		
+	def showActorsError(self):
+		self.spActors.stop()
+		self.spActors.hide()
+		self.frInfo.hide()
+		self.frActors.hide()
+		self.hbActorsError.show()
+		
+	def onActorsPreExecute(self):
+		self.showActorsSpinner()
+		
+	def onActorsFirstItemReceived(self, info, name, href):
+		self.actorsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
+		self.tvActors.set_model(self.actorsStore)
+		self.lbInfo.set_text(info)
+		self.addToActorsModel(name, href)
+		self.showActorsData()
+		
+	def addToActorsModel(self, name, href):
+		self.actorsStore.append([FILE_PIXBUF, name, href])
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -1022,16 +1062,21 @@ class OnlineLifeGui(gtk.Window):
 				self.resultsThread.start()
 		
 	def btnActorsClicked(self, widget):
-		print("btnActors clicked")
+		if self.vbRight.get_visible():
+			self.vbRight.hide()
+		else:
+			self.vbRight.show()
 		
 	def btnQuitClicked(self, widget):
 		self.destroy()
 		
 	def onDestroy(self, widget):
-		if self.categoriesThread != None and self.categoriesThread.is_alive:
+		if self.categoriesThread != None and self.categoriesThread.is_alive():
 			self.categoriesThread.cancel()
-		if self.resultsThread != None and self.resultsThread.is_alive:
+		if self.resultsThread != None and self.resultsThread.is_alive():
 			self.resultsThread.cancel()
+		if self.actorsThread != None and self.actorsThread.is_alive():
+			self.actorsThread.cancel()
 		self.cancelImageThreads()
 		gtk.main_quit()
 		
@@ -1332,19 +1377,28 @@ class ActorsThread(threading.Thread):
 		self.isCancelled = False
 		threading.Thread.__init__(self)
 		
+	def cancel(self):
+		self.isCancelled = True
+		
 	def run(self):
-		parser = ActorsHTMLParser()
+		parser = ActorsHTMLParser(self)
 		try:
 			response = urllib2.urlopen(self.link)
 			for line in response:
-			    parser.feed(line)
+				if not self.isCancelled:
+					parser.feed(line)
+				else:
+					parser.close()
+					break
 		except Exception as ex:
 			print ex
 			
 class ActorsHTMLParser(HTMLParser):
-	def __init__(self):
+	def __init__(self, task):
+		self.task = task
 		self.isDirector = False
 		self.isActors = False
+		self.count = 0
 		HTMLParser.__init__(self)
 	
 	def handle_starttag(self, tag, attrs):
@@ -1353,8 +1407,17 @@ class ActorsHTMLParser(HTMLParser):
 			for attr in attrs:
 				if attr[0] == "href":
 					self.href = attr[1]
+					break
 		elif tag == 'iframe':
-			print "iframe found"
+			for attr in attrs:
+				if attr[0] == "src":
+					self.playerUrl = attr[1]
+					print self.playerUrl
+					self.task.cancel()
+					break
+					
+	def getInfo(self):
+		return self.task.title + " - " + self.year + " - " + self.country
 		
 	def handle_data(self, data):
 		data = data.strip()
@@ -1362,26 +1425,32 @@ class ActorsHTMLParser(HTMLParser):
 			utf_data = data.decode('cp1251')
 			if self.tag == 'a':
 				if self.isDirector:
-				    print utf_data + u" (режиссер)"
-				    self.isDirector = False
+				    name = utf_data + u" (режиссер)"
+				    if self.count == 0:
+						gobject.idle_add(
+						    self.task.gui.onActorsFirstItemReceived,
+						    self.getInfo(),
+						    name,
+						    self.href)
+				    self.count += 1
 				elif self.isActors:
-					print utf_data
-				    #print "Href:", self.href
+					gobject.idle_add(self.task.gui.addToActorsModel, 
+					                 utf_data, 
+					                 self.href)
+					self.count += 1
 			elif self.tag == 'p':
 				if utf_data.find(u"Год:") != -1:
-					self.year = utf_data
-					print self.year
+					self.year = utf_data.split(":")[1].strip()
 				elif utf_data.find(u"Страна:") != -1:
-					self.country = utf_data
-					print self.country
+					self.country = utf_data.split(":")[1].strip()
 				elif utf_data.find(u"Режиссер:") != -1:
 					self.isDirector = True
 				elif utf_data.find(u"В ролях:") != -1:
+					self.isDirector = False
 					self.isActors = True
 				elif utf_data.find(u"Премьера в мире") != -1:
 					self.isActors = False
-				
-		
+					
 def main():
 	gobject.threads_init()
 	gtk.main()
