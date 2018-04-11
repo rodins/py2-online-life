@@ -9,6 +9,7 @@ import gobject
 import urllib
 import urllib2
 import sys
+import os
 from subprocess import call
 import threading
 from HTMLParser import HTMLParser
@@ -22,9 +23,15 @@ COL_PIXBUF = 0
 COL_TEXT = 1
 ICON_VIEW_ITEM_WIDTH = 180
 
-FILE_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/link_16.png")
-DIR_PIXBUF = gtk.gdk.pixbuf_new_from_file("images/folder_16.png")
-EMPTY_POSTER = gtk.gdk.pixbuf_new_from_file("images/blank.png")
+FILE_PIXBUF = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0], 
+                                                        "images",
+                                                        "link_16.png"))
+DIR_PIXBUF = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0],
+                                                       "images",
+                                                       "folder_16.png"))
+EMPTY_POSTER = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0],
+                                                         "images",
+                                                         "blank.png"))
 
 class Result:
 	title = ""
@@ -565,7 +572,9 @@ class OnlineLifeGui(gtk.Window):
 		self.set_border_width(5)
 		self.set_size_request(700, 400)
 		try:
-			self.set_icon_from_file("images/online_life.png")
+			self.set_icon_from_file(os.path.join(sys.path[0],
+			                                     "images", 
+			                                     "online_life.png"))
 		except Exception, e:
 			print e.message
 			sys.exit(1)
