@@ -592,7 +592,9 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
 		bookmarkIcon = gtk.Image()
-		bookmarkIcon.set_from_file("images/bookmark_24.png")
+		bookmarkIcon.set_from_file(os.path.join(sys.path[0], 
+		                                        "images", 
+		                                        "bookmark_24.png"))
 		
 		btnSavedItems = gtk.ToolButton(bookmarkIcon)
 		btnSavedItems.set_tooltip_text("Show/hide bookmarks")
@@ -750,35 +752,41 @@ class OnlineLifeGui(gtk.Window):
 		btnLinksError.set_image(image)
 		btnLinksError.set_tooltip_text("Repeat")
 		
-		btnGetLinks = gtk.Button()
-		image = gtk.image_new_from_stock(gtk.STOCK_COPY, gtk.ICON_SIZE_BUTTON)
-		btnGetLinks.set_image(image)
-		btnGetLinks.set_tooltip_text("Get links")
+		#btnGetLinks = gtk.Button()
+		#image = gtk.image_new_from_stock(gtk.STOCK_COPY, gtk.ICON_SIZE_BUTTON)
+		#btnGetLinks.set_image(image)
+		#btnGetLinks.set_tooltip_text("Get links")
 		
-		btnListEpisodes = gtk.Button()
+		self.btnOpen = gtk.Button()
 		image = gtk.image_new_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_BUTTON)
-		btnListEpisodes.set_image(image)
-		btnListEpisodes.set_tooltip_text("List episodes")
+		self.btnOpen.set_image(image)
+		self.btnOpen.set_label("Open")
+		self.btnOpen.set_tooltip_text("Get movie links or serial parts list")
+		self.btnOpen.connect("clicked", self.btnOpenClicked)
+		self.btnOpen.show()
+		self.btnOpen.set_sensitive(False)
 		
 		btnSave = gtk.Button()
 		image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
-		btnGetLinks.set_image(image)
-		btnGetLinks.set_tooltip_text("Add to bookmarks")
+		btnSave.set_image(image)
+		btnSave.set_tooltip_text("Add to bookmarks")
 		
 		btnDelete = gtk.Button()
 		image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
-		btnGetLinks.set_image(image)
-		btnGetLinks.set_tooltip_text("Remove from bookmarks")
+		btnDelete.set_image(image)
+		btnDelete.set_tooltip_text("Remove from bookmarks")
 		
 		hbActions = gtk.HBox(True, 1)
 		hbActions.pack_start(spLinks, True, False, 10)
 		hbActions.pack_start(btnLinksError, True, True, 5)
-		hbActions.pack_start(btnGetLinks, True, True, 5)
-		hbActions.pack_start(btnListEpisodes, True, True, 5)
+		#hbActions.pack_start(btnGetLinks, True, True, 5)
+		hbActions.pack_start(self.btnOpen, True, True, 5)
 		hbActions.pack_start(btnSave, True, True, 5)
 		hbActions.pack_start(btnDelete, True, True, 5)
+		hbActions.show()
 		frActions = gtk.Frame("Actions")
 		frActions.add(hbActions)
+		frActions.show()
 		
 		tvBackActors = self.createTreeView()
 		swBackActors = self.createScrolledWindow()
@@ -808,6 +816,9 @@ class OnlineLifeGui(gtk.Window):
 		self.categoriesThread = None
 		self.resultsThread = None
 		self.actorsThread = None
+		self.playerThread = None
+		self.JsThread = None
+		self.PlaylistThread = None
 		
 		self.rangeRepeatSet = set()
 		self.imagesCache = {}
@@ -997,6 +1008,7 @@ class OnlineLifeGui(gtk.Window):
 		    
 	def showActorsSpinner(self):
 		self.btnActors.set_sensitive(True)
+		self.btnOpen.set_sensitive(False)
 		self.vbRight.show()
 		self.spActors.show()
 		self.spActors.start()
@@ -1038,6 +1050,27 @@ class OnlineLifeGui(gtk.Window):
 		if self.resultsThread == None or not self.resultsThread.is_alive():
 		    self.resultsThread = ResultsThread(self, values[1], values[0])
 		    self.resultsThread.start()
+		    
+	def setActorsPlayerUrl(self, playerUrl):
+		self.playerUrl = playerUrl
+		self.btnOpen.set_sensitive(self.playerUrl != "")
+		
+	def btnOpenClicked(self, widget):
+		if self.playerUrl.find("http") != -1:
+			if self.playerThread == None or not self.playerThread.is_alive():
+			    self.playerThread = PlayerThread(self)
+			    self.playerThread.start()
+		else:
+			message = "Cannot open external link: http:" + self.playerUrl
+			dialog = gtk.MessageDialog(self, 
+			                           gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, 
+			                           gtk.MESSAGE_INFO,
+			                           gtk.BUTTONS_OK,
+			                           message)
+			dialog.set_title("External link")
+			dialog.run()
+			dialog.destroy()
+		
 		
 	def btnSavedItemsClicked(self, widget):
 		print("btnSavedItems clicked")
@@ -1429,8 +1462,8 @@ class ActorsHTMLParser(HTMLParser):
 		elif tag == 'iframe':
 			for attr in attrs:
 				if attr[0] == "src":
-					self.playerUrl = attr[1]
-					print self.playerUrl
+					gobject.idle_add(self.task.gui.setActorsPlayerUrl,
+					                 attr[1])
 					self.task.cancel()
 					break
 					
@@ -1468,6 +1501,45 @@ class ActorsHTMLParser(HTMLParser):
 					self.isActors = True
 				elif utf_data.find(u"Премьера в мире") != -1:
 					self.isActors = False
+
+class PlayerThread(threading.Thread):
+	def __init__(self, gui):
+		self.gui = gui
+		self.isCancelled = False
+		threading.Thread.__init__(self)
+		
+	def cancel(self):
+		self.isCancelled = True
+		
+	def startJsThread(self, jsLink):
+		print jsLink
+		
+	def run(self):
+		try:
+			# Go to player link find js link
+			parser = PlayerHTMLParser(self)
+			response = urllib2.urlopen(self.gui.playerUrl)
+			for line in response:
+				if not self.isCancelled:
+				    parser.feed(line)
+				else:
+					parser.close()
+				
+		except Exception as ex:
+			print ex
+				
+class PlayerHTMLParser(HTMLParser):
+	def __init__(self, task):
+		self.task = task
+		HTMLParser.__init__(self)
+	
+	def handle_starttag(self, tag, attrs):
+		if tag == "script":
+			for attr in attrs:
+				if attr[0] == "src" and attr[1].find("js.php") != -1:
+					self.task.isCancelled = True
+					gobject.idle_add(self.task.startJsThread, "http:" + attr[1])
+					break		
 					
 def main():
 	gobject.threads_init()
