@@ -817,8 +817,8 @@ class OnlineLifeGui(gtk.Window):
 		self.resultsThread = None
 		self.actorsThread = None
 		self.playerThread = None
-		self.JsThread = None
-		self.PlaylistThread = None
+		self.jsThread = None
+		self.playlistThread = None
 		
 		self.rangeRepeatSet = set()
 		self.imagesCache = {}
@@ -1513,6 +1513,10 @@ class PlayerThread(threading.Thread):
 		
 	def startJsThread(self, jsLink):
 		print jsLink
+		if self.gui.jsThread == None or not self.gui.jsThread.is_alive():
+			# params to init: link and referer
+		    self.gui.jsThread = JsThread(jsLink, self.gui.playerUrl)
+		    self.gui.jsThread.start()
 		
 	def run(self):
 		try:
@@ -1539,7 +1543,28 @@ class PlayerHTMLParser(HTMLParser):
 				if attr[0] == "src" and attr[1].find("js.php") != -1:
 					self.task.isCancelled = True
 					gobject.idle_add(self.task.startJsThread, "http:" + attr[1])
-					break		
+					break
+					
+class JsThread(threading.Thread):
+	def __init__(self, url, referer):
+		self.jsUrl = url
+		self.referer = referer
+		self.isCancelled = False
+		threading.Thread.__init__(self)
+		
+	def cancel(self):
+		self.isCancelled = True
+		
+	def run(self):
+		headers = {'Referer': self.referer}
+		try:
+			req = urllib2.Request(self.jsUrl, None, headers)
+			response = urllib2.urlopen(req)
+			for line in response:
+				print line
+			
+		except Exception as ex:
+			print ex		
 					
 def main():
 	gobject.threads_init()
