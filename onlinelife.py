@@ -1512,7 +1512,6 @@ class PlayerThread(threading.Thread):
 		self.isCancelled = True
 		
 	def startJsThread(self, jsLink):
-		print jsLink
 		if self.gui.jsThread == None or not self.gui.jsThread.is_alive():
 			# params to init: link and referer
 		    self.gui.jsThread = JsThread(jsLink, self.gui.playerUrl)
@@ -1555,13 +1554,31 @@ class JsThread(threading.Thread):
 	def cancel(self):
 		self.isCancelled = True
 		
+	def playlistLinkParser(self, js):
+		link_begin = js.find("pl:")
+		link_end = js.find("\"", link_begin+4)
+		if link_begin != -1 and link_end != -1:
+			link = js[link_begin+4: link_end]
+			return link
+		return ""
+		
 	def run(self):
 		headers = {'Referer': self.referer}
 		try:
 			req = urllib2.Request(self.jsUrl, None, headers)
 			response = urllib2.urlopen(req)
+			js = ""
 			for line in response:
-				print line
+				js += line
+				
+			play_item = playItemParser(js.decode('cp1251'))
+			if play_item.comment != "":
+				if len(play_item.comment) == 1:
+					print "TODO: fix trailer title"
+				print "Comment: " + play_item.comment
+			else:
+				playlist_link = self.playlistLinkParser(js)
+				print playlist_link
 			
 		except Exception as ex:
 			print ex		
