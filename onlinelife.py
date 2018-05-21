@@ -1514,7 +1514,7 @@ class PlayerThread(threading.Thread):
 	def startJsThread(self, jsLink):
 		if self.gui.jsThread == None or not self.gui.jsThread.is_alive():
 			# params to init: link and referer
-		    self.gui.jsThread = JsThread(jsLink, self.gui.playerUrl)
+		    self.gui.jsThread = JsThread(self.gui, jsLink, self.gui.playerUrl)
 		    self.gui.jsThread.start()
 		
 	def run(self):
@@ -1545,7 +1545,8 @@ class PlayerHTMLParser(HTMLParser):
 					break
 					
 class JsThread(threading.Thread):
-	def __init__(self, url, referer):
+	def __init__(self, gui, url, referer):
+		self.gui = gui
 		self.jsUrl = url
 		self.referer = referer
 		self.isCancelled = False
@@ -1562,6 +1563,9 @@ class JsThread(threading.Thread):
 			return link
 		return ""
 		
+	def runPlayItemDialog(self, play_item):
+		PlayItemDialog(self.gui, play_item)
+		
 	def run(self):
 		headers = {'Referer': self.referer}
 		try:
@@ -1570,18 +1574,42 @@ class JsThread(threading.Thread):
 			js = ""
 			for line in response:
 				js += line
-				
+			
+			#TODO: make parsing to happen inside play item constructor	
 			play_item = playItemParser(js.decode('cp1251'))
 			if play_item.comment != "":
 				if len(play_item.comment) == 1:
-					print "TODO: fix trailer title"
-				print "Comment: " + play_item.comment
+					play_item.comment = "Fix trailer title"
+				gobject.idle_add(self.runPlayItemDialog, play_item)
 			else:
 				playlist_link = self.playlistLinkParser(js)
 				print playlist_link
 			
 		except Exception as ex:
-			print ex		
+			print ex
+			
+class PlayItemDialog:
+	def __init__(self, gui, play_item):
+		self.gui = gui
+		self.play_item = play_item
+		self.RESPONSE_FLV = 1
+		self.RESPONSE_MP4 = 2
+		self.createDialog()
+	    
+	def createDialog(self):
+		label = gtk.Label(self.play_item.comment)
+		dialog = gtk.Dialog("Process links",
+		                    self.gui,
+		                    gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+		                    ("FLV", self.RESPONSE_FLV,
+		                     "MP4", self.RESPONSE_MP4,
+		                     gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,))
+		dialog.vbox.pack_start(label)
+		label.show()
+		response = dialog.run()
+		dialog.destroy()
+		print ("Response", response)
+		                    
 					
 def main():
 	gobject.threads_init()
