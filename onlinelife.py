@@ -8,6 +8,7 @@ import gobject
 
 import urllib
 import urllib2
+import requests
 import sys
 import os
 from subprocess import Popen
@@ -1563,8 +1564,20 @@ class JsThread(threading.Thread):
 			return link
 		return ""
 		
-	def runPlayItemDialog(self, play_item):
-		PlayItemDialog(self.gui, play_item)
+	def runPlayItemDialog(self, play_item, flv_size, mp4_size):
+		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
+		
+	def getLinkSize(self, link):
+		MBFACTOR = float(1 << 20)
+		try:
+			response = requests.head(link)
+			size = response.headers.get('content-length', 0)
+			if size == 0:
+				return ""
+			return ' ({:.2f} Mb)'.format(int(size)/MBFACTOR)
+		except Exception as ex:
+			print ex
+			return ""
 		
 	def run(self):
 		headers = {'Referer': self.referer}
@@ -1580,7 +1593,12 @@ class JsThread(threading.Thread):
 			if play_item.comment != "":
 				if len(play_item.comment) == 1:
 					play_item.comment = "Fix trailer title"
-				gobject.idle_add(self.runPlayItemDialog, play_item)
+				flv_size = self.getLinkSize(play_item.file)
+				mp4_size = self.getLinkSize(play_item.download)
+				gobject.idle_add(self.runPlayItemDialog, 
+				                 play_item, 
+				                 flv_size, 
+				                 mp4_size)
 			else:
 				playlist_link = self.playlistLinkParser(js)
 				print playlist_link
@@ -1589,11 +1607,15 @@ class JsThread(threading.Thread):
 			print ex
 			
 class PlayItemDialog:
-	def __init__(self, gui, play_item):
+	def __init__(self, gui, play_item, flv_size, mp4_size):
 		self.gui = gui
 		self.play_item = play_item
 		self.RESPONSE_FLV = 1
 		self.RESPONSE_MP4 = 2
+		self.flv_size = flv_size
+		self.mp4_size = mp4_size
+		self.flv_title = "FLV" + flv_size
+		self.mp4_title = "MP4" + mp4_size 
 		self.createDialog()
 	    
 	def createDialog(self):
@@ -1601,9 +1623,14 @@ class PlayItemDialog:
 		dialog = gtk.Dialog("Process links",
 		                    self.gui,
 		                    gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-		                    ("FLV", self.RESPONSE_FLV,
-		                     "MP4", self.RESPONSE_MP4,
+		                    (self.flv_title, self.RESPONSE_FLV,
+		                     self.mp4_title, self.RESPONSE_MP4,
 		                     gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,))
+		if self.flv_size == "":
+			dialog.set_response_sensitive(self.RESPONSE_FLV, False)
+		if self.mp4_size == "":
+			dialog.set_response_sensitive(self.RESPONSE_MP4, False)
+			
 		dialog.vbox.pack_start(label)
 		label.show()
 		response = dialog.run()
