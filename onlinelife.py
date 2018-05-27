@@ -10,7 +10,7 @@ import urllib
 import urllib2
 import sys
 import os
-from subprocess import call
+from subprocess import Popen
 import threading
 from HTMLParser import HTMLParser
 
@@ -1607,9 +1607,11 @@ class PlayItemDialog:
 		dialog.vbox.pack_start(label)
 		label.show()
 		response = dialog.run()
-		dialog.destroy()
-		print ("Response", response)
-		                    
+		if response == self.RESPONSE_FLV:
+			Popen(["mpv", self.play_item.file])
+		elif response == self.RESPONSE_MP4:
+			Popen(["mpv", self.play_item.download])
+		dialog.destroy()		                    
 					
 def main():
 	gobject.threads_init()
