@@ -692,6 +692,7 @@ class OnlineLifeGui(gtk.Window):
 		
 		# Add widgets to vbCenter
 		tvPlaylists = self.createTreeView()
+		tvPlaylists.connect("row-activated", self.tvPlaylistsRowActivated)
 		self.playlistsStore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str, str)
 		tvPlaylists.set_model(self.playlistsStore)
 		tvPlaylists.show()
@@ -1166,6 +1167,15 @@ class OnlineLifeGui(gtk.Window):
 	def appendToSinglePlaylist(self, title, flv, mp4):
 		self.playlistsStore.append(None, [FILE_PIXBUF, title, flv, mp4])
 		
+	def tvPlaylistsRowActivated(self, treeview, path, view_column):
+		model = treeview.get_model()
+		pl_iter = model.get_iter(path)
+		values = model.get(pl_iter, 1, 2, 3) # 0 column is icon
+		if values[1] != None and values[2] != None:
+			sizeThread = LinksSizeThread(self, values[0], values[1], values[2])
+			sizeThread.start()
+			
+		
 	def createTreeView(self):
 		treeView = gtk.TreeView()
 		
@@ -1390,7 +1400,6 @@ class ResultsThread(threading.Thread):
 		return next_page
 		
 class ImageThread(threading.Thread):
-	
 	def __init__(self, link, row, imagesCache):
 		self.imagesCache = imagesCache
 		self.link = link
@@ -1559,6 +1568,40 @@ class PlayerHTMLParser(HTMLParser):
 					self.task.isCancelled = True
 					gobject.idle_add(self.task.startJsThread, "http:" + attr[1])
 					break
+
+def getLinkSize(link):
+	MBFACTOR = float(1 << 20)
+	try:
+		response = requests.head(link)
+		size = response.headers.get('content-length', 0)
+		if size == 0:
+			return ""
+		return ' ({:.2f} Mb)'.format(int(size)/MBFACTOR)
+	except Exception as ex:
+		print ex
+		return ""
+		
+class LinksSizeThread(threading.Thread):
+	def __init__(self, gui, title, flv, mp4):
+		self.gui = gui
+		self.title = title
+		self.flv = flv
+		self.mp4 = mp4
+		threading.Thread.__init__(self)
+		
+	def runPlayItemDialog(self, flv_size, mp4_size):
+		play_item = PlayItem()
+		play_item.comment = self.title
+		play_item.file = self.flv
+		play_item.download = self.mp4
+		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
+		
+	def run(self):
+		flv_size = getLinkSize(self.flv)
+		mp4_size = getLinkSize(self.mp4)
+		gobject.idle_add(self.runPlayItemDialog, 
+		                 flv_size, 
+		                 mp4_size)
 					
 class JsThread(threading.Thread):
 	def __init__(self, gui, url, referer):
@@ -1581,18 +1624,6 @@ class JsThread(threading.Thread):
 		
 	def runPlayItemDialog(self, play_item, flv_size, mp4_size):
 		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
-		
-	def getLinkSize(self, link):
-		MBFACTOR = float(1 << 20)
-		try:
-			response = requests.head(link)
-			size = response.headers.get('content-length', 0)
-			if size == 0:
-				return ""
-			return ' ({:.2f} Mb)'.format(int(size)/MBFACTOR)
-		except Exception as ex:
-			print ex
-			return ""
 			
 	def playItemParser(self, js):
 		play_item = PlayItem()
@@ -1676,8 +1707,8 @@ class JsThread(threading.Thread):
 			if play_item.comment != "":
 				if len(play_item.comment) == 1:
 					play_item.comment = "Fix trailer title"
-				flv_size = self.getLinkSize(play_item.file)
-				mp4_size = self.getLinkSize(play_item.download)
+				flv_size = getLinkSize(play_item.file)
+				mp4_size = getLinkSize(play_item.download)
 				gobject.idle_add(self.runPlayItemDialog, 
 				                 play_item, 
 				                 flv_size, 
