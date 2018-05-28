@@ -611,11 +611,11 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.insert(self.btnRefresh, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
-		btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
-		btnUp.set_tooltip_text("Move up")
-		btnUp.connect("clicked", self.btnUpClicked)
-		btnUp.set_sensitive(False)
-		toolbar.insert(btnUp, -1)
+		self.btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
+		self.btnUp.set_tooltip_text("Move up")
+		self.btnUp.connect("clicked", self.btnUpClicked)
+		self.btnUp.set_sensitive(False)
+		toolbar.insert(self.btnUp, -1)
 		
 		btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
 		btnPrev.set_tooltip_text("Go back in history")
@@ -692,6 +692,9 @@ class OnlineLifeGui(gtk.Window):
 		
 		# Add widgets to vbCenter
 		tvPlaylists = self.createTreeView()
+		self.playlistsStore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str, str)
+		tvPlaylists.set_model(self.playlistsStore)
+		tvPlaylists.show()
 		self.swPlaylists = self.createScrolledWindow()
 		self.swPlaylists.add(tvPlaylists)
 		
@@ -886,6 +889,7 @@ class OnlineLifeGui(gtk.Window):
 	
 	def showCenterSpinner(self, isPaging):
 		self.btnRefresh.set_sensitive(False)
+		self.btnUp.set_sensitive(False)
 		self.spCenter.show()
 		self.spCenter.start()
 		self.swPlaylists.hide()
@@ -895,6 +899,7 @@ class OnlineLifeGui(gtk.Window):
 		
 	def showResultsData(self):
 		self.btnRefresh.set_sensitive(True)
+		self.btnUp.set_sensitive(False)
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.hide()
@@ -902,6 +907,7 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.hide()
 		
 	def showPlaylsitsData(self):
+		self.btnUp.set_sensitive(True)
 		self.spCenter.hide()
 		self.spCenter.stop()
 		self.swPlaylists.show()
@@ -1084,7 +1090,7 @@ class OnlineLifeGui(gtk.Window):
 			self.resultsThread.start()
 		
 	def btnUpClicked(self, widget):
-		print("btnUp clicked")
+		self.showResultsData()
 		
 	def btnPrevClicked(self, widget):
 		print("btnPrev clicked")
@@ -1147,6 +1153,19 @@ class OnlineLifeGui(gtk.Window):
 		self.resultsThread = ResultsThread(self, link, title)
 		self.resultsThread.start()
 		
+	def onPlaylistsPreExecute(self):
+		self.playlistsStore.clear()
+		self.showCenterSpinner(False)
+		
+	def appendToPlaylists(self, title):
+		self.itPlaylist = self.playlistsStore.append(None, [DIR_PIXBUF, title, None, None])
+		
+	def appendToPlaylist(self, title, flv, mp4):
+		self.playlistsStore.append(self.itPlaylist, [FILE_PIXBUF, title, flv, mp4])
+		
+	def appendToSinglePlaylist(self, title, flv, mp4):
+		self.playlistsStore.append(None, [FILE_PIXBUF, title, flv, mp4])
+		
 	def createTreeView(self):
 		treeView = gtk.TreeView()
 		
@@ -1169,7 +1188,6 @@ class OnlineLifeGui(gtk.Window):
 		return scrolledWindow
 		
 class CategoriesThread(threading.Thread):
-	
 	def __init__(self, gui = None):
 		self.gui = gui
 		self.isCancelled = False
@@ -1255,7 +1273,6 @@ class CategoriesThread(threading.Thread):
 			gobject.idle_add(self.gui.onCategoriesError)
 					
 class ResultsThread(threading.Thread):
-	
 	def __init__(self, gui, link, title = ""):
 		self.gui = gui
 		self.title = title
@@ -1378,8 +1395,6 @@ class ImageThread(threading.Thread):
 		self.imagesCache = imagesCache
 		self.link = link
 		self.row = row
-		self.imageWidth = "165"
-		self.imageHeight = "236"
 		self.pixbufLoader = gtk.gdk.PixbufLoader()
 		self.pixbufLoader.connect("area-prepared", self.pixbufLoaderPrepared)
 		self.isCancelled = False
@@ -1401,8 +1416,8 @@ class ImageThread(threading.Thread):
 		
 	def get_image_link(self):
 		data = {}
-		data['h'] = self.imageHeight
-		data['w'] = self.imageWidth
+		data['h'] = "236"
+		data['w'] = "165"
 		data['zc'] = '1'
 		url_values = urllib.urlencode(data)
 		return self.link + "&" + url_values
@@ -1578,18 +1593,86 @@ class JsThread(threading.Thread):
 		except Exception as ex:
 			print ex
 			return ""
+			
+	def playItemParser(self, js):
+		play_item = PlayItem()
 		
+		# Search for file
+		file_begin = js.find("\"file\"")
+		file_end = js.find("\"", file_begin+10)
+		if file_begin != -1 and file_end != -1:
+			play_item.file = js[file_begin+8: file_end]
+		
+		# Search for download
+		download_begin = js.find("\"download\"")
+		download_end = js.find("\"", download_begin+12)
+		if download_begin != -1 and download_end != -1:
+			play_item.download = js[download_begin+12: download_end]
+			
+		# Search for comment
+		comment_begin = js.find("\"comment\"")
+		comment_end = js.find("\"", comment_begin+11)
+		if comment_begin != -1 and comment_end != -1:
+			play_item.comment = js[comment_begin+11: comment_end]
+			
+		return play_item
+			
+	def playlistParser(self, comment, json):
+		if comment != "":
+			self.gui.appendToPlaylists(comment)
+		
+		item_start = json.find("{")
+		item_end = json.find("}", item_start+1)
+		while item_start != -1 and item_end != -1:
+			item = json[item_start: item_end]
+			play_item = self.playItemParser(item)
+			if comment != "":
+				self.gui.appendToPlaylist(play_item.comment, play_item.file, play_item.download)
+			else:
+				self.gui.appendToSinglePlaylist(play_item.comment, play_item.file, play_item.download)
+			item_start = json.find("{", item_end)
+			item_end = json.find("}", item_start)
+			
+	def playlistsParser(self, json):
+		begin = "\"comment\""
+		end = "]"
+		playlist_begin = json.find(begin)
+		playlist_end = json.find(end, playlist_begin)
+		while playlist_begin != -1 and playlist_end != -1:
+			playlist = json[playlist_begin+10: playlist_end]
+			comment_begin = playlist.find("\"")
+			comment_end = playlist.find("\"", comment_begin+1)
+			if comment_begin != -1 and comment_end != -1:
+				comment = playlist[comment_begin+1: comment_end]
+				if playlist.find("\"playlist\"") == -1:
+					comment = ""
+					comment_end = -1
+				items = playlist[comment_end+1:]		
+				self.playlistParser(comment, items)
+			
+			playlist_begin = json.find(begin, playlist_end+2)
+			playlist_end = json.find(end, playlist_begin+1)
+		self.gui.showPlaylsitsData()
+			
+	def getPlaylist(self, link):
+		gobject.idle_add(self.gui.onPlaylistsPreExecute)
+		try:
+			response = urllib2.urlopen(link)
+			json = response.read()
+			gobject.idle_add(self.playlistsParser, json)
+		except Exception as ex:
+			print ex
+			gobject.idle_add(self.gui.showCenterError)
+				
 	def run(self):
 		headers = {'Referer': self.referer}
 		try:
 			req = urllib2.Request(self.jsUrl, None, headers)
 			response = urllib2.urlopen(req)
-			js = ""
-			for line in response:
-				js += line
+			js = response.read()
 			
 			#TODO: make parsing to happen inside play item constructor	
-			play_item = playItemParser(js.decode('cp1251'))
+			play_item = self.playItemParser(js.decode('cp1251'))
 			if play_item.comment != "":
 				if len(play_item.comment) == 1:
 					play_item.comment = "Fix trailer title"
@@ -1601,7 +1684,7 @@ class JsThread(threading.Thread):
 				                 mp4_size)
 			else:
 				playlist_link = self.playlistLinkParser(js)
-				print playlist_link
+				self.getPlaylist(playlist_link)
 			
 		except Exception as ex:
 			print ex
