@@ -917,6 +917,11 @@ class OnlineLifeGui(gtk.Window):
 		
 	def showCenterError(self, title):
 		isPaging = (title == "")
+		if title == "playlists_error":
+			self.playlistsError = True
+		else:
+			self.playlistsError = False
+			
 		if not isPaging:
 		    self.set_title(PROG_NAME + " - Error")
 		self.spCenter.hide()
@@ -927,11 +932,14 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.show()
 		
 	def btnCenterErrorClicked(self, widget):
-		if not self.resultsThread.is_alive():
-			self.resultsThread = ResultsThread(self,
-			                                   self.resultsThread.link,
-			                                   self.resultsThread.title)
-			self.resultsThread.start()
+		if self.playlistsError:
+			print "Not yet implemented"
+		else:
+			if not self.resultsThread.is_alive():
+				self.resultsThread = ResultsThread(self,
+				                                   self.resultsThread.link,
+				                                   self.resultsThread.title)
+				self.resultsThread.start()
 		
 	def onResultsPreExecute(self, title):
 		if title != "":
@@ -1693,7 +1701,7 @@ class JsThread(threading.Thread):
 			gobject.idle_add(self.playlistsParser, json)
 		except Exception as ex:
 			print ex
-			gobject.idle_add(self.gui.showCenterError)
+			gobject.idle_add(self.gui.showCenterError, "playlists_error")
 				
 	def run(self):
 		headers = {'Referer': self.referer}
