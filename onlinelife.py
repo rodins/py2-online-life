@@ -1681,11 +1681,11 @@ class JsThread(threading.Thread):
 		playlist_begin = json.find(begin)
 		playlist_end = json.find(end, playlist_begin)
 		while playlist_begin != -1 and playlist_end != -1:
-			playlist = json[playlist_begin+10: playlist_end]
-			comment_begin = playlist.find("\"")
-			comment_end = playlist.find("\"", comment_begin+1)
+			playlist = json[playlist_begin-1: playlist_end]
+			comment_begin = playlist.find(":\"")
+			comment_end = playlist.find("\"", comment_begin+2)
 			if comment_begin != -1 and comment_end != -1:
-				comment = playlist[comment_begin+1: comment_end]
+				comment = playlist[comment_begin+2: comment_end]
 				if playlist.find("\"playlist\"") == -1:
 					comment = ""
 					comment_end = -1
