@@ -1537,6 +1537,17 @@ class ActorsHTMLParser(HTMLParser):
 					self.isActors = True
 				elif utf_data.find(u"Премьера в мире") != -1:
 					self.isActors = False
+					
+def showErrorDialog(window):
+	message = "Network problem"
+	dialog = gtk.MessageDialog(window, 
+	                           gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, 
+	                           gtk.MESSAGE_ERROR,
+	                           gtk.BUTTONS_OK,
+	                           message)
+	dialog.set_title("Error")
+	dialog.run()
+	dialog.destroy()
 
 class PlayerThread(threading.Thread):
 	def __init__(self, gui):
@@ -1566,6 +1577,7 @@ class PlayerThread(threading.Thread):
 				
 		except Exception as ex:
 			print ex
+			gobject.idle_add(showErrorDialog, self.gui)
 				
 class PlayerHTMLParser(HTMLParser):
 	def __init__(self, task):
@@ -1730,6 +1742,7 @@ class JsThread(threading.Thread):
 			
 		except Exception as ex:
 			print ex
+			gobject.idle_add(showErrorDialog, self.gui)
 			
 class PlayItemDialog:
 	def __init__(self, gui, play_item, flv_size, mp4_size):
