@@ -908,6 +908,7 @@ class OnlineLifeGui(gtk.Window):
 		self.hbCenterError.hide()
 		
 	def showPlaylsitsData(self):
+		self.set_title(PROG_NAME + " - " + self.playlistsTitle)
 		self.btnUp.set_sensitive(True)
 		self.spCenter.hide()
 		self.spCenter.stop()
@@ -950,9 +951,10 @@ class OnlineLifeGui(gtk.Window):
 		
 	def onFirstItemReceived(self, title = ""):
 		if title != "":
-		    self.set_title(PROG_NAME + " - " + title)
-		    self.createAndSetResultsModel()
-		    self.rangeRepeatSet.clear()
+			self.resultsTitle = title
+			self.set_title(PROG_NAME + " - " + title)
+			self.createAndSetResultsModel()
+			self.rangeRepeatSet.clear()
 		self.showResultsData()
 		
 	def createAndSetResultsModel(self):
@@ -1015,11 +1017,11 @@ class OnlineLifeGui(gtk.Window):
 	
 	def onResultActivated(self, iconview, path):
 		resultsIter = self.resultsStore.get_iter(path)
-		title = self.resultsStore.get_value(resultsIter, 1)
+		self.playlistsTitle = self.resultsStore.get_value(resultsIter, 1)
 		link = self.resultsStore.get_value(resultsIter, 2)
 		if self.actorsThread == None or not self.actorsThread.is_alive():
 			self.onActorsPreExecute()
-			self.actorsThread = ActorsThread(self, link, title)
+			self.actorsThread = ActorsThread(self, link, self.playlistsTitle)
 			self.actorsThread.start()
 		    
 	def showActorsSpinner(self):
@@ -1099,6 +1101,7 @@ class OnlineLifeGui(gtk.Window):
 			self.resultsThread.start()
 		
 	def btnUpClicked(self, widget):
+		self.set_title(PROG_NAME + " - " + self.resultsTitle)
 		self.showResultsData()
 		
 	def btnPrevClicked(self, widget):
