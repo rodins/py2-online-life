@@ -745,6 +745,7 @@ class OnlineLifeGui(gtk.Window):
 		self.spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
 		
 		btnActorsError = gtk.Button("Repeat")
+		btnActorsError.connect("clicked", self.btnActorsErrorClicked)
 		btnActorsError.show()
 		self.hbActorsError = gtk.HBox(False, 1)
 		self.hbActorsError.pack_start(btnActorsError, True, False, 10)
@@ -1018,10 +1019,10 @@ class OnlineLifeGui(gtk.Window):
 	def onResultActivated(self, iconview, path):
 		resultsIter = self.resultsStore.get_iter(path)
 		self.playlistsTitle = self.resultsStore.get_value(resultsIter, 1)
-		link = self.resultsStore.get_value(resultsIter, 2)
+		self.actorsLink = self.resultsStore.get_value(resultsIter, 2)
 		if self.actorsThread == None or not self.actorsThread.is_alive():
 			self.onActorsPreExecute()
-			self.actorsThread = ActorsThread(self, link, self.playlistsTitle)
+			self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
 			self.actorsThread.start()
 		    
 	def showActorsSpinner(self):
@@ -1136,6 +1137,12 @@ class OnlineLifeGui(gtk.Window):
 			self.vbRight.hide()
 		else:
 			self.vbRight.show()
+			
+	def btnActorsErrorClicked(self, widget):
+		if self.actorsThread == None or not self.actorsThread.is_alive():
+			self.onActorsPreExecute()
+			self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
+			self.actorsThread.start()
 		
 	def btnQuitClicked(self, widget):
 		self.destroy()
@@ -1473,11 +1480,12 @@ class ActorsThread(threading.Thread):
 			response = urllib2.urlopen(self.link)
 			for line in response:
 				if not self.isCancelled:
-					parser.feed(line)
+					parser.feed(line.decode('cp1251'))
 				else:
 					parser.close()
 					break
 		except Exception as ex:
+			self.gui.showActorsError()
 			print ex
 			
 class ActorsHTMLParser(HTMLParser):
@@ -1506,20 +1514,19 @@ class ActorsHTMLParser(HTMLParser):
 	def getInfo(self):
 		return self.task.title + " - " + self.year + " - " + self.country
 		
-	def handle_data(self, data):
-		data = data.strip()
-		if data != "" and data != ",":
-			utf_data = data.decode('cp1251')
+	def handle_data(self, utf_data):
+		utf_data = utf_data.strip()
+		if utf_data != "" and utf_data != ",":
 			if self.tag == 'a':
 				if self.isDirector:
-				    name = utf_data + u" (режиссер)"
-				    if self.count == 0:
+					name = utf_data + u" (режиссер)"
+					if self.count == 0:
 						gobject.idle_add(
 						    self.task.gui.onActorsFirstItemReceived,
 						    self.getInfo(),
 						    name,
 						    self.href)
-				    self.count += 1
+						self.count += 1
 				elif self.isActors:
 					gobject.idle_add(self.task.gui.addToActorsModel, 
 					                 utf_data, 
