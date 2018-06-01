@@ -691,13 +691,14 @@ class OnlineLifeGui(gtk.Window):
 		self.vbLeft.pack_start(frSavedItems, True, True, 1)
 		
 		# Add widgets to vbCenter
-		tvPlaylists = self.createTreeView()
-		tvPlaylists.connect("row-activated", self.tvPlaylistsRowActivated)
+		self.tvPlaylists = self.createTreeView()
+		self.tvPlaylists.connect("row-activated", self.tvPlaylistsRowActivated)
+		# Stores arg: title, flv, mpv
 		self.playlistsStore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str, str)
-		tvPlaylists.set_model(self.playlistsStore)
-		tvPlaylists.show()
+		self.singlePlaylistStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
+		self.tvPlaylists.show()
 		self.swPlaylists = self.createScrolledWindow()
-		self.swPlaylists.add(tvPlaylists)
+		self.swPlaylists.add(self.tvPlaylists)
 		
 		self.ivResults = gtk.IconView()
 		self.ivResults.set_pixbuf_column(COL_PIXBUF)
@@ -896,7 +897,11 @@ class OnlineLifeGui(gtk.Window):
 		self.spCenter.start()
 		self.swPlaylists.hide()
 		self.swResults.set_visible(isPaging)
-		self.vbCenter.set_child_packing(self.spCenter, not isPaging, False, 1, gtk.PACK_START)
+		self.vbCenter.set_child_packing(self.spCenter, 
+		                                not isPaging, 
+		                                False, 
+		                                1, 
+		                                gtk.PACK_START)
 		self.hbCenterError.hide()
 		
 	def showResultsData(self):
@@ -1174,7 +1179,14 @@ class OnlineLifeGui(gtk.Window):
 		
 	def onPlaylistsPreExecute(self):
 		self.playlistsStore.clear()
+		self.singlePlaylistStore.clear()
 		self.showCenterSpinner(False)
+		
+	def setPlaylistsModel(self):
+		self.tvPlaylists.set_model(self.playlistsStore)
+		
+	def setSinglePlaylistModel(self):
+		self.tvPlaylists.set_model(self.singlePlaylistStore)
 		
 	def appendToPlaylists(self, title):
 		self.itPlaylist = self.playlistsStore.append(None, [DIR_PIXBUF, title, None, None])
@@ -1183,7 +1195,7 @@ class OnlineLifeGui(gtk.Window):
 		self.playlistsStore.append(self.itPlaylist, [FILE_PIXBUF, title, flv, mp4])
 		
 	def appendToSinglePlaylist(self, title, flv, mp4):
-		self.playlistsStore.append(None, [FILE_PIXBUF, title, flv, mp4])
+		self.singlePlaylistStore.append([FILE_PIXBUF, title, flv, mp4])
 		
 	def tvPlaylistsRowActivated(self, treeview, path, view_column):
 		model = treeview.get_model()
@@ -1710,9 +1722,16 @@ class JsThread(threading.Thread):
 					comment_end = -1
 				items = playlist[comment_end+1:]		
 				self.playlistParser(comment, items)
+				# In case of single playlist
+				if(comment == ""):
+					self.gui.setSinglePlaylistModel()
+					self.gui.showPlaylsitsData()
+					return
 			
 			playlist_begin = json.find(begin, playlist_end+2)
 			playlist_end = json.find(end, playlist_begin+1)
+		#In case of multiple playlists
+		self.gui.setPlaylistsModel()
 		self.gui.showPlaylsitsData()
 			
 	def getPlaylist(self, link):
