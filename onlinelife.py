@@ -641,7 +641,6 @@ class OnlineLifeGui(gtk.Window):
 		self.btnActors = gtk.ToggleToolButton(gtk.STOCK_INFO)
 		self.btnActors.set_tooltip_text("Show/hide info")
 		self.btnActors.connect("clicked", self.btnActorsClicked)
-		self.btnActors.set_sensitive(False)
 		toolbar.insert(self.btnActors, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
@@ -1031,7 +1030,6 @@ class OnlineLifeGui(gtk.Window):
 			self.actorsThread.start()
 		    
 	def showActorsSpinner(self):
-		self.btnActors.set_sensitive(True)
 		self.btnOpen.set_sensitive(False)
 		self.vbRight.show()
 		self.spActors.show()
