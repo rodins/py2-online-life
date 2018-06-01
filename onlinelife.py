@@ -586,7 +586,7 @@ class OnlineLifeGui(gtk.Window):
 		toolbar = gtk.Toolbar()
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		
-		btnCategories = gtk.ToolButton(gtk.STOCK_DIRECTORY)
+		btnCategories = gtk.ToggleToolButton(gtk.STOCK_DIRECTORY)
 		btnCategories.set_tooltip_text("Show/hide categories")
 		btnCategories.connect("clicked", self.btnCategoriesClicked)
 		toolbar.insert(btnCategories, -1)
@@ -638,7 +638,7 @@ class OnlineLifeGui(gtk.Window):
 		toolbar.insert(entryItem, -1)
 		toolbar.insert(gtk.SeparatorToolItem(), -1)
 		
-		self.btnActors = gtk.ToolButton(gtk.STOCK_INFO)
+		self.btnActors = gtk.ToggleToolButton(gtk.STOCK_INFO)
 		self.btnActors.set_tooltip_text("Show/hide info")
 		self.btnActors.connect("clicked", self.btnActorsClicked)
 		self.btnActors.set_sensitive(False)
