@@ -330,17 +330,6 @@ def playItemParser(js):
 		play_item.comment = js[comment_begin+11: comment_end]
 		
 	return play_item	
-    
-def getHrefId(href):
-	id_begin = href.find(DOMAIN_NO_SUFFIX)
-	# id_begin detection make suffix independent
-	if id_begin != -1:
-		id_begin = href.find("/", id_begin+1)
-		
-	id_end = href.find("-", id_begin)
-	if id_begin != -1 and id_end != -1:
-		id_str = href[id_begin+1: id_end]
-		return id_str
 	
 def stringToFile(page):
 	print("Saving...")
@@ -1021,6 +1010,23 @@ class OnlineLifeGui(gtk.Window):
 			if not self.resultsThread.is_alive() and self.resultsNextLink != "":
 				self.resultsThread = ResultsThread(self, self.resultsNextLink)
 				self.resultsThread.start()
+				
+	def getHrefId(self, href):
+		id_begin = href.find(DOMAIN_NO_SUFFIX)
+		# id_begin detection make suffix independent
+		if id_begin != -1:
+			id_begin = href.find("/", id_begin+1)
+			
+		id_end = href.find("-", id_begin)
+		if id_begin != -1 and id_end != -1:
+			id_str = href[id_begin+1: id_end]
+			return id_str
+		
+	def startJsThread(self, url, referer):
+		if self.jsThread == None or not self.jsThread.is_alive():
+			# params to init: link and referer
+		    self.jsThread = JsThread(self, url, referer)
+		    self.jsThread.start()
 	
 	def onResultActivated(self, iconview, path):
 		resultsIter = self.resultsStore.get_iter(path)
@@ -1032,7 +1038,10 @@ class OnlineLifeGui(gtk.Window):
 				self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
 				self.actorsThread.start()
 		else:
-			print "TODO: use constant links to get playlist or playItem..."
+			hrefId = self.getHrefId(self.actorsLink)
+			url = "http://play.cidwo.com/js.php?id=" + hrefId
+			referer = "http://play.cidwo.com/player.php?newsid=" + hrefId
+			self.startJsThread(url, referer)
 		
 		    
 	def showActorsSpinner(self):
