@@ -830,6 +830,8 @@ class OnlineLifeGui(gtk.Window):
 		self.imagesCache = {}
 		self.imageThreads = []
 		
+		self.isActorsAvailable = False
+		
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -1024,10 +1026,14 @@ class OnlineLifeGui(gtk.Window):
 		resultsIter = self.resultsStore.get_iter(path)
 		self.playlistsTitle = self.resultsStore.get_value(resultsIter, 1)
 		self.actorsLink = self.resultsStore.get_value(resultsIter, 2)
-		if self.actorsThread == None or not self.actorsThread.is_alive():
-			self.onActorsPreExecute()
-			self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
-			self.actorsThread.start()
+		if self.btnActors.get_active():
+			if self.actorsThread == None or not self.actorsThread.is_alive():
+				self.onActorsPreExecute()
+				self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
+				self.actorsThread.start()
+		else:
+			print "TODO: use constant links to get playlist or playItem..."
+		
 		    
 	def showActorsSpinner(self):
 		self.btnOpen.set_sensitive(False)
@@ -1060,6 +1066,7 @@ class OnlineLifeGui(gtk.Window):
 		self.tvActors.set_model(self.actorsStore)
 		self.lbInfo.set_text(info)
 		self.addToActorsModel(name, href)
+		self.isActorsAvailable = True
 		self.showActorsData()
 		
 	def addToActorsModel(self, name, href):
@@ -1136,10 +1143,12 @@ class OnlineLifeGui(gtk.Window):
 				self.resultsThread.start()
 		
 	def btnActorsClicked(self, widget):
-		if self.vbRight.get_visible():
-			self.vbRight.hide()
-		else:
-			self.vbRight.show()
+		if self.isActorsAvailable:
+			if self.vbRight.get_visible():
+				self.vbRight.hide()
+			else:
+				self.vbRight.show()
+		
 			
 	def btnActorsErrorClicked(self, widget):
 		if self.actorsThread == None or not self.actorsThread.is_alive():
