@@ -39,9 +39,33 @@ class Result:
 	href = ""
 	
 class PlayItem:
-	comment = ""
-	file = ""
-	download = ""
+	def __init__(self, title, flv, mp4):
+		self.comment = title
+		self.file = flv
+		self.download = mp4
+	
+	def __init__(self, js):
+		self.comment = ""
+		self.file = ""
+		self.download = ""
+		
+		# Search for file
+		file_begin = js.find("\"file\"")
+		file_end = js.find("\"", file_begin+10)
+		if file_begin != -1 and file_end != -1:
+			self.file = js[file_begin+8: file_end]
+		
+		# Search for download
+		download_begin = js.find("\"download\"")
+		download_end = js.find("\"", download_begin+12)
+		if download_begin != -1 and download_end != -1:
+			self.download = js[download_begin+12: download_end]
+			
+		# Search for comment
+		comment_begin = js.find("\"comment\"")
+		comment_end = js.find("\"", comment_begin+11)
+		if comment_begin != -1 and comment_end != -1:
+			self.comment = js[comment_begin+11: comment_end]
 	
 class Playlist:
 	comment = ""
@@ -371,7 +395,7 @@ def processLinks(result):
 				selectPlaylist(items)
 	else:
 		# Probing for play item
-		play_item = playItemParser(js)
+		play_item = PlayItem(js)
 		if play_item.file != "":
 			processPlayItem(play_item)
 		else:
@@ -1653,10 +1677,7 @@ class LinksSizeThread(threading.Thread):
 		threading.Thread.__init__(self)
 		
 	def runPlayItemDialog(self, flv_size, mp4_size):
-		play_item = PlayItem()
-		play_item.comment = self.title
-		play_item.file = self.flv
-		play_item.download = self.mp4
+		play_item = PlayItem(self.title, self.flv, self.mp4)
 		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
 		
 	def run(self):
@@ -1689,25 +1710,7 @@ class JsThread(threading.Thread):
 		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
 			
 	def playItemParser(self, js):
-		play_item = PlayItem()
-		
-		# Search for file
-		file_begin = js.find("\"file\"")
-		file_end = js.find("\"", file_begin+10)
-		if file_begin != -1 and file_end != -1:
-			play_item.file = js[file_begin+8: file_end]
-		
-		# Search for download
-		download_begin = js.find("\"download\"")
-		download_end = js.find("\"", download_begin+12)
-		if download_begin != -1 and download_end != -1:
-			play_item.download = js[download_begin+12: download_end]
-			
-		# Search for comment
-		comment_begin = js.find("\"comment\"")
-		comment_end = js.find("\"", comment_begin+11)
-		if comment_begin != -1 and comment_end != -1:
-			play_item.comment = js[comment_begin+11: comment_end]
+		play_item = PlayItem(js)
 			
 		return play_item
 			
@@ -1719,7 +1722,7 @@ class JsThread(threading.Thread):
 		item_end = json.find("}", item_start+1)
 		while item_start != -1 and item_end != -1:
 			item = json[item_start: item_end]
-			play_item = self.playItemParser(item)
+			play_item = PlayItem(item)
 			if comment != "":
 				self.gui.appendToPlaylist(play_item.comment, play_item.file, play_item.download)
 			else:
@@ -1771,9 +1774,8 @@ class JsThread(threading.Thread):
 			req = urllib2.Request(self.jsUrl, None, headers)
 			response = urllib2.urlopen(req)
 			js = response.read()
-			
-			#TODO: make parsing to happen inside play item constructor	
-			play_item = self.playItemParser(js.decode('cp1251'))
+				
+			play_item = PlayItem(js.decode('cp1251'))
 			if play_item.comment != "":
 				if len(play_item.comment) == 1:
 					play_item.comment = "Fix trailer title"
