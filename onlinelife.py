@@ -35,33 +35,29 @@ EMPTY_POSTER = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0],
                                                          "blank.png"))
 	
 class PlayItem:
-	def __init__(self, title, flv, mp4):
-		self.comment = title
-		self.file = flv
-		self.download = mp4
-	
-	def __init__(self, js):
+	def __init__(self, js = ""):
 		self.comment = ""
 		self.file = ""
 		self.download = ""
 		
-		# Search for file
-		file_begin = js.find("\"file\"")
-		file_end = js.find("\"", file_begin+10)
-		if file_begin != -1 and file_end != -1:
-			self.file = js[file_begin+8: file_end]
-		
-		# Search for download
-		download_begin = js.find("\"download\"")
-		download_end = js.find("\"", download_begin+12)
-		if download_begin != -1 and download_end != -1:
-			self.download = js[download_begin+12: download_end]
+		if (js != ""):
+			# Search for file
+			file_begin = js.find("\"file\"")
+			file_end = js.find("\"", file_begin+10)
+			if file_begin != -1 and file_end != -1:
+				self.file = js[file_begin+8: file_end]
 			
-		# Search for comment
-		comment_begin = js.find("\"comment\"")
-		comment_end = js.find("\"", comment_begin+11)
-		if comment_begin != -1 and comment_end != -1:
-			self.comment = js[comment_begin+11: comment_end]
+			# Search for download
+			download_begin = js.find("\"download\"")
+			download_end = js.find("\"", download_begin+12)
+			if download_begin != -1 and download_end != -1:
+				self.download = js[download_begin+12: download_end]
+				
+			# Search for comment
+			comment_begin = js.find("\"comment\"")
+			comment_end = js.find("\"", comment_begin+11)
+			if comment_begin != -1 and comment_end != -1:
+				self.comment = js[comment_begin+11: comment_end]
 	
 def stringToFile(page):
 	print("Saving...")
@@ -1173,7 +1169,10 @@ class LinksSizeThread(threading.Thread):
 		threading.Thread.__init__(self)
 		
 	def runPlayItemDialog(self, flv_size, mp4_size):
-		play_item = PlayItem(self.title, self.flv, self.mp4)
+		play_item = PlayItem()
+		play_item.comment = self.title
+		play_item.file = self.flv
+		play_item.download = self.mp4
 		PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
 		
 	def run(self):
