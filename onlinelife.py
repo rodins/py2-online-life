@@ -820,6 +820,7 @@ class OnlineLifeGui(gtk.Window):
 		self.imageThreads = []
 		
 		self.isActorsAvailable = False
+		self.actorsLink = ""
 		
 		
 	def showCategoriesSpinner(self):
@@ -1033,10 +1034,7 @@ class OnlineLifeGui(gtk.Window):
 		self.playlistsTitle = self.resultsStore.get_value(resultsIter, 1)
 		self.actorsLink = self.resultsStore.get_value(resultsIter, 2)
 		if self.btnActors.get_active():
-			if self.actorsThread == None or not self.actorsThread.is_alive():
-				self.onActorsPreExecute()
-				self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
-				self.actorsThread.start()
+			self.startActorsThread()
 		else:
 			hrefId = self.getHrefId(self.actorsLink)
 			url = "http://play.cidwo.com/js.php?id=" + hrefId
@@ -1076,6 +1074,7 @@ class OnlineLifeGui(gtk.Window):
 		self.lbInfo.set_text(info)
 		self.addToActorsModel(name, href)
 		self.isActorsAvailable = True
+		self.actorsLink = ""
 		self.showActorsData()
 		
 	def addToActorsModel(self, name, href):
@@ -1155,15 +1154,21 @@ class OnlineLifeGui(gtk.Window):
 		if self.isActorsAvailable:
 			if self.vbRight.get_visible():
 				self.vbRight.hide()
-			else:
+			elif self.actorsLink == "":
 				self.vbRight.show()
-		
-			
-	def btnActorsErrorClicked(self, widget):
+			else:
+				self.startActorsThread()
+		elif self.actorsLink != "":
+			self.startActorsThread()
+	
+	def startActorsThread(self):
 		if self.actorsThread == None or not self.actorsThread.is_alive():
 			self.onActorsPreExecute()
 			self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
-			self.actorsThread.start()
+			self.actorsThread.start()	
+			
+	def btnActorsErrorClicked(self, widget):
+		self.startActorsThread()
 		
 	def btnQuitClicked(self, widget):
 		self.destroy()
