@@ -1028,6 +1028,7 @@ class ActorsThread(threading.Thread):
 		try:
 			response = urllib2.urlopen(self.link)
 			for line in response:
+				print line.decode('cp1251')
 				if not self.isCancelled:
 					parser.feed(line.decode('cp1251'))
 				else:
@@ -1060,6 +1061,13 @@ class ActorsHTMLParser(HTMLParser):
 					self.task.cancel()
 					break
 					
+	def handle_endtag(self, tag):
+		if tag == 'p':
+			if self.isDirector:
+				self.isDirector = False
+			elif self.isActors:
+				self.isActors = False
+					
 	def getInfo(self):
 		return self.task.title + " - " + self.year + " - " + self.country
 		
@@ -1089,10 +1097,7 @@ class ActorsHTMLParser(HTMLParser):
 				elif utf_data.find(u"Режиссер:") != -1:
 					self.isDirector = True
 				elif utf_data.find(u"В ролях:") != -1:
-					self.isDirector = False
 					self.isActors = True
-				elif utf_data.find(u"Премьера в мире") != -1:
-					self.isActors = False
 					
 def showErrorDialog(window):
 	message = "Network problem"
