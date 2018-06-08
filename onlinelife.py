@@ -788,7 +788,8 @@ class CategoriesThread(threading.Thread):
 		self.isCancelled = True
 		
 	def run(self):
-		gobject.idle_add(self.gui.onCategoriesPreExecute)	
+		gobject.idle_add(self.gui.onCategoriesPreExecute)
+		parser = CategoriesHTMLParser(self)	
 		try:
 			begin_found = False
 			drop_found = False
@@ -799,55 +800,75 @@ class CategoriesThread(threading.Thread):
 			for line in response:
 				if self.isCancelled:
 					gobject.idle_add(self.gui.showCategoriesData)
-					break
-				
-				if line.find("<div class=\"nav\">") != -1:
-					begin_found = True
-					gobject.idle_add(self.gui.addMainToRoot)
-				
-				if begin_found:
-					# Find new, popular, best
-					pull_right_begin = line.find("li class=\"pull-right")
-					pull_right_end = line.find("</li>", pull_right_begin+1)
-					if pull_right_begin != -1 and pull_right_end != -1:
-					    pull_right = line[pull_right_begin: pull_right_end]
-					    title, href = self.parseAnchor(pull_right)
-					    gobject.idle_add(self.gui.addToMain, title, href)
-					    continue
-					
-					trailer_begin = line.find("<li class=\"nodrop\" ")
-					trailer_end = line.find("</a>", trailer_begin+1)
-					if trailer_begin != -1 and trailer_end != -1:
-						trailer = line[trailer_begin: trailer_end+4]
-						title, href = self.parseAnchor(trailer)
-						gobject.idle_add(self.gui.addToMain, title, href)
-						continue
-					
-					# Find drop item
-					if line.find("<li class=\"drop\">") != -1:
-						drop_found = True
-						is_drop_first = True
-						
-					if drop_found:
-						result = self.parseAnchor(line)
-						if result != None:
-							if is_drop_first:
-								gobject.idle_add(self.gui.addDropToRoot, result[0], result[1])
-								is_drop_first = False
-							else:
-								gobject.idle_add(self.gui.addToDrop, result[0], result[1])	
-						
-					if line.find("</ul>") != -1 and drop_found:
-						drop_found = False
-									
-				if line.find("</div>") != -1 and begin_found:
-					begin_found = False
+					parser.close()
 					response.close()
-					gobject.idle_add(self.gui.onCategoriesPostExecute)
 					break
+				else:
+					parser.feed(line.decode('cp1251'))
 					
 		except Exception as ex:
+			print ex
 			gobject.idle_add(self.gui.onCategoriesError)
+			
+class CategoriesHTMLParser(HTMLParser):
+	def __init__(self, task):
+		self.task = task
+		self.isNav = False
+		self.isDrop = False
+		self.isDropChild = False
+		self.href = ""
+		self.isNoDrop = True
+		HTMLParser.__init__(self)
+		
+	def handle_starttag(self, tag, attrs):
+		if tag == "div" and len(attrs) == 1:
+			attr = attrs[0]
+			if attr[0] == "class" and attr[1] == "nav":
+				self.isNav = True
+				gobject.idle_add(self.task.gui.addMainToRoot)
+		
+		if self.isNav:
+			if tag == "li":
+				if len(attrs) != 0:
+					attr = attrs[0]
+					if attr[0] == "class":
+						if attr[1] == "drop":
+							self.isDrop = True
+						elif attr[1].find("nodrop") != -1:
+							self.isNoDrop = True
+				else:
+				    self.isDropChild = True
+			elif tag == "a":
+				for attr in attrs:
+					if attr[0] == "href":
+						if attr[1].find(WDOMAIN) == -1:
+							self.href = WDOMAIN + attr[1]
+						else:
+						    self.href = attr[1]
+		
+	def handle_endtag(self, tag):
+		if self.isNav:
+			if tag == "div":
+				self.isNav = False
+				gobject.idle_add(self.task.gui.onCategoriesPostExecute)
+				self.task.cancel()
+			elif tag == "li":
+				if self.isDropChild:
+					self.isDropChild = False
+				elif self.isDrop:
+				    self.isDrop = False
+				elif self.isNoDrop:
+					self.isNoDrop = False
+		
+	def handle_data(self, data):
+		if self.isNav:
+		    if data.strip() != "":
+				if self.isDrop and not self.isDropChild:
+					gobject.idle_add(self.task.gui.addDropToRoot, data, self.href)
+				elif self.isDropChild:
+					gobject.idle_add(self.task.gui.addToDrop, data, self.href)
+				elif self.isNoDrop and data != "ТВ":
+					gobject.idle_add(self.task.gui.addToMain, data, self.href)
 					
 class ResultsThread(threading.Thread):
 	def __init__(self, gui, link, title = ""):
