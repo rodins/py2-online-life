@@ -1028,7 +1028,6 @@ class ActorsThread(threading.Thread):
 		try:
 			response = urllib2.urlopen(self.link)
 			for line in response:
-				print line.decode('cp1251')
 				if not self.isCancelled:
 					parser.feed(line.decode('cp1251'))
 				else:
@@ -1083,7 +1082,11 @@ class ActorsHTMLParser(HTMLParser):
 						    self.getInfo(),
 						    name,
 						    self.href)
-						self.count += 1
+					else:
+						gobject.idle_add(self.task.gui.addToActorsModel, 
+					                 name, 
+					                 self.href)
+					self.count += 1
 				elif self.isActors:
 					gobject.idle_add(self.task.gui.addToActorsModel, 
 					                 utf_data, 
