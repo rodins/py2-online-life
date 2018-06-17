@@ -335,9 +335,10 @@ class OnlineLifeGui(gtk.Window):
 		self.imagesCache = {}
 		self.imageThreads = []
 		
+		self.nextLinks = set()
+		
 		self.isActorsAvailable = False
 		self.actorsLink = ""
-		
 		
 	def showCategoriesSpinner(self):
 	    self.spCategories.show()
@@ -468,6 +469,7 @@ class OnlineLifeGui(gtk.Window):
 			self.set_title(PROG_NAME + " - " + title)
 			self.createAndSetResultsModel()
 			self.rangeRepeatSet.clear()
+			self.nextLinks.clear()
 		self.showResultsData()
 		
 	def createAndSetResultsModel(self):
@@ -525,8 +527,10 @@ class OnlineLifeGui(gtk.Window):
 		max_value = value + page_size + page_size
 		if max_value > upper:
 			if not self.resultsThread.is_alive() and self.resultsNextLink != "":
-				self.resultsThread = ResultsThread(self, self.resultsNextLink)
-				self.resultsThread.start()
+				if self.resultsNextLink not in self.nextLinks:
+					self.nextLinks.add(self.resultsNextLink)
+					self.resultsThread = ResultsThread(self, self.resultsNextLink)
+					self.resultsThread.start()
 				
 	def getHrefId(self, href):
 		id_begin = href.find(DOMAIN_NO_SUFFIX)
@@ -906,6 +910,7 @@ class ResultsHTMLParser(HTMLParser):
 		self.isNavDiv = False
 		self.isNavAnchor = False
 		self.count = 0
+		self.nextLink = ""
 		HTMLParser.__init__(self)
 		
 	def handle_starttag(self, tag, attrs):
@@ -942,7 +947,11 @@ class ResultsHTMLParser(HTMLParser):
 		
 	def handle_endtag(self, tag):
 		if tag == "div":
-			pass
+			if self.isNavDiv:
+				self.isNavDiv = False
+				gobject.idle_add(self.task.gui.setResultsNextLink, 
+				                 self.nextLink)
+				self.task.cancel()
 		elif tag == "a":
 			if self.isPosterDiv:
 				self.isPosterAnchor = False
@@ -951,6 +960,7 @@ class ResultsHTMLParser(HTMLParser):
 				self.isNavAnchor = False
 		elif tag == "body":
 			self.task.cancel()
+			gobject.idle_add(self.task.gui.setResultsNextLink, "")
 		
 	def handle_data(self, data):
 		if data.strip() != "":
@@ -968,17 +978,14 @@ class ResultsHTMLParser(HTMLParser):
 					gobject.idle_add(self.task.gui.scrollToTopOfList)
 				self.count += 1
 			elif self.isNavAnchor:
-				self.task.cancel()
-				next_link = ""
 				if data == "Вперед":
 					if self.nav_href == "#":
 						list_submit_begin = self.onclick.find("list_submit(")
 						list_submit_end = self.onclick.find(")", list_submit_begin)
 						if list_submit_begin != -1 and list_submit_end != -1:
-							next_link = self.onclick[list_submit_begin+12: list_submit_end]
+							self.nextLink = self.onclick[list_submit_begin+12: list_submit_end]
 					else:
-						next_link = self.nav_href
-				gobject.idle_add(self.task.gui.setResultsNextLink, next_link)
+						self.nextLink = self.nav_href
 		
 class ImageThread(threading.Thread):
 	def __init__(self, link, row, imagesCache):
@@ -1004,20 +1011,12 @@ class ImageThread(threading.Thread):
 		else:
 			print "pixbuf error"
 		
-	def get_image_link(self):
-		data = {}
-		data['h'] = "236"
-		data['w'] = "165"
-		data['zc'] = '1'
-		url_values = urllib.urlencode(data)
-		return self.link + "&" + url_values
-		
 	def cancel(self):
 		self.isCancelled = True
 		
 	def run(self):
 		try:
-			response = urllib2.urlopen(self.get_image_link())
+			response = urllib2.urlopen(self.link)
 			for buf in response:
 				if self.isCancelled:
 					break 
