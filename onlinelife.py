@@ -879,113 +879,106 @@ class ResultsThread(threading.Thread):
 		threading.Thread.__init__(self)
 	
 	def run(self):
-		gobject.idle_add(self.gui.onResultsPreExecute, self.title)
-		# TODO: use html parser to parse results	
-		h = HTMLParser()
+		gobject.idle_add(self.gui.onResultsPreExecute, self.title)	
+		parser = ResultsHTMLParser(self)
 		try:
-			poster_found = False
-			poster = ""
-			count = 0
-		    
 			response = urllib2.urlopen(self.link)
-			
 			for line in response:
 				if self.isCancelled:
+					parser.close()
+					response.close()
 					gobject.idle_add(self.gui.showResultsData)
 					break
-				
-				poster_begin = line.find("<div class=\"custom-poster\"")
-				poster_end = line.find("</a>")
-				
-				pager_begin = line.find("class=\"navigation\"")
-				if pager_begin != -1 and not poster_found:
-					pager = line[pager_begin:]
-					next_page = self.parse_pager(pager)
-					gobject.idle_add(self.gui.setResultsNextLink, next_page)
-					return
-				
-				if poster_begin != -1:
-					poster_found = True
-				elif poster_end != -1 and poster_found:
-					poster_found = False
-					poster_end_str = line[:poster_end].strip()
-					if len(poster_end_str) > 0:
-						poster += poster_end_str
-					title_begin = poster.find("/>")
-					if title_begin != -1:
-						title = poster[title_begin+2:].decode('cp1251')
-						# Delete title new line
-						title_new_line = title.find('\n')
-						if title_new_line != -1:
-							title = title[:title_new_line]
-							
-						title = h.unescape(title)
-						count += 1
-
-						href_begin = poster.find("href=")
-						href_end = poster.find(".html", href_begin+1)
-						
-						if href_begin != -1 and href_end != -1:
-							href = poster[href_begin+6: href_end+5]
-							if(count == 1):
-								gobject.idle_add(self.gui.onFirstItemReceived, self.title)
-							
-			                image = ""
-			                image_begin = poster.find("<img")
-			                image_end = poster.find(".jpg", image_begin)
-			                if image_begin != -1 and image_end != -1:
-								image = poster[image_begin+10: image_end+4]
-								
-			                gobject.idle_add(self.gui.addToResultsModel, title, href, image)
-			                # self.title != "" on new results list, not paging  
-			                if(count == 1 and self.title != ""):
-								gobject.idle_add(self.gui.scrollToTopOfList)
-			                
-					poster = ""
-				elif poster_found:
-					if poster == "":
-						poster = line
-					else:
-					    poster += line
-			gobject.idle_add(self.gui.setResultsNextLink, "")		
+				else:
+					parser.feed(line.decode('cp1251'))		
 		except Exception as ex:
 			print(ex)
 			gobject.idle_add(self.gui.showCenterError, self.title)
 			
 	def cancel(self):
 		self.isCancelled = True
+
+class ResultsHTMLParser(HTMLParser):
+	def __init__(self, task):
+		self.task = task
+		self.isPosterDiv = False
+		self.isPosterAnchor = False
+		self.isNavDiv = False
+		self.isNavAnchor = False
+		self.count = 0
+		HTMLParser.__init__(self)
 		
-	def parse_pager_href(self, anchor):
-		href_begin = anchor.find("href=\"")
-		href_end = anchor.find("\"", href_begin+6)
-		if href_begin != -1 and href_end != -1:
-			href = anchor[href_begin+6: href_end]
-			if href == "#":
-				list_submit_begin = anchor.find("list_submit(")
-				list_submit_end = anchor.find(")", list_submit_begin)
-				if list_submit_begin != -1 and list_submit_end != -1:
-					return anchor[list_submit_begin+12: list_submit_end]
-			else:
-				return href
-					
-	def parse_pager(self, pager):
-		next_page = ""
+	def handle_starttag(self, tag, attrs):
+		if tag == "div":
+			if len(attrs) != 0:
+				attr = attrs[0]
+				if attr[0] == "class":
+					if attr[1] == "custom-poster":
+						self.isPosterDiv = True
+					elif attr[1] == "navigation":
+						self.isNavDiv = True
+		elif tag == "a":
+			if self.isPosterDiv:
+				self.isPosterAnchor = True
+				for attr in attrs:
+					if attr[0] == "href":
+						self.href = attr[1]
+						break
+			if self.isNavDiv:
+				self.isNavAnchor = True
+				for attr in attrs:
+					if attr[0] == "href":
+						self.nav_href = attr[1]
+						break
+					elif attr[0] == "onclick":
+						self.onclick = attr[1]
+		elif tag == "img":
+			if self.isPosterAnchor:
+				for attr in attrs:
+					if attr[0] == "src":
+						self.image = attr[1]
+						break
+
 		
-		anchor_begin = pager.find("<a")
-		anchor_end = pager.find("</a>", anchor_begin+1)
-		while anchor_begin != -1 and anchor_end != -1:
-			anchor = pager[anchor_begin: anchor_end]
-			
-			title_begin = anchor.find(">")
-			title = anchor[title_begin+1:].decode('cp1251')
-			if title == u"Вперед":
-				next_page = self.parse_pager_href(anchor)
-				break
-			
-			anchor_begin = pager.find("<a", anchor_end)
-			anchor_end = pager.find("</a>", anchor_begin)
-			
-		return next_page
+	def handle_endtag(self, tag):
+		if tag == "div":
+			pass
+		elif tag == "a":
+			if self.isPosterDiv:
+				self.isPosterAnchor = False
+				self.isPosterDiv = False
+			if self.isNavAnchor:
+				self.isNavAnchor = False
+		elif tag == "body":
+			self.task.cancel()
+		
+	def handle_data(self, data):
+		if data.strip() != "":
+			if self.isPosterAnchor:
+				if(self.count == 0):
+				    gobject.idle_add(self.task.gui.onFirstItemReceived, 
+				                     self.task.title)
+				gobject.idle_add(self.task.gui.addToResultsModel, 
+				                 data, 
+				                 self.href, 
+				                 self.image)
+				# self.title != "" on new results list, not paging
+				# scrolling to top after first item added to model  
+				if(self.count == 1 and self.task.title != ""):
+					gobject.idle_add(self.task.gui.scrollToTopOfList)
+				self.count += 1
+			elif self.isNavAnchor:
+				self.task.cancel()
+				next_link = ""
+				if data == "Вперед":
+					if self.nav_href == "#":
+						list_submit_begin = self.onclick.find("list_submit(")
+						list_submit_end = self.onclick.find(")", list_submit_begin)
+						if list_submit_begin != -1 and list_submit_end != -1:
+							next_link = self.onclick[list_submit_begin+12: list_submit_end]
+					else:
+						next_link = self.nav_href
+				gobject.idle_add(self.task.gui.setResultsNextLink, next_link)
 		
 class ImageThread(threading.Thread):
 	def __init__(self, link, row, imagesCache):
