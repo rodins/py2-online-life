@@ -122,17 +122,18 @@ class OnlineLifeGui(gtk.Window):
         self.btnUp.set_sensitive(False)
         toolbar.insert(self.btnUp, -1)
         
-        btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
-        btnPrev.set_tooltip_text("Go back in history")
-        btnPrev.connect("clicked", self.btnPrevClicked)
-        btnPrev.set_sensitive(False)
-        toolbar.insert(btnPrev, -1)
+        self.btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
+        self.btnPrev.set_tooltip_text("Go back in history")
+        self.btnPrev.connect("clicked", self.btnPrevClicked)
+        self.btnPrev.set_sensitive(False)
+        toolbar.insert(self.btnPrev, -1)
         
-        btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
-        btnNext.set_tooltip_text("Go forward in history")
-        btnNext.connect("clicked", self.btnNextClicked)
-        btnNext.set_sensitive(False)
-        toolbar.insert(btnNext, -1)
+        self.btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
+        self.btnNext.set_tooltip_text("Go forward in history")
+        self.btnNext.connect("clicked", self.btnNextClicked)
+        self.btnNext.set_sensitive(False)
+        toolbar.insert(self.btnNext, -1)
+        
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         entryItem = gtk.ToolItem()
@@ -339,6 +340,10 @@ class OnlineLifeGui(gtk.Window):
         
         self.isActorsAvailable = False
         self.actorsLink = ""
+
+        self.resultsStore = None
+        self.prevHistory = []
+        self.nextHistory = []
         
     def showCategoriesSpinner(self):
         self.spCategories.show()
@@ -467,10 +472,22 @@ class OnlineLifeGui(gtk.Window):
         if title != "":
             self.resultsTitle = title
             self.set_title(PROG_NAME + " - " + title)
+            self.saveToHistory()
             self.createAndSetResultsModel()
             self.rangeRepeatSet.clear()
             self.nextLinks.clear()
         self.showResultsData()
+
+    def saveToHistory(self):
+        if(self.resultsStore != None):
+            historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
+            self.prevHistory.append(historyItem)
+            self.nextHistory = []
+            self.updatePrevNextButtons()
+
+    def updatePrevNextButtons(self):
+        self.btnPrev.set_sensitive(len(self.prevHistory) != 0)
+        self.btnNext.set_sensitive(len(self.nextHistory) != 0)
         
     def createAndSetResultsModel(self):
         self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
@@ -1341,7 +1358,13 @@ class PlayItemDialog:
             Popen(["mpv", self.play_item.file])
         elif response == self.RESPONSE_MP4:
             Popen(["mpv", self.play_item.download])
-        dialog.destroy()                            
+        dialog.destroy()
+
+class HistoryItem:
+    def __init__(self, title, store, nextLink):
+        self.title = title
+        self.store = store
+        self.nextLink = nextLink
                     
 def main():
     gobject.threads_init()
