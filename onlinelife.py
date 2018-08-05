@@ -486,8 +486,18 @@ class OnlineLifeGui(gtk.Window):
             self.updatePrevNextButtons()
 
     def updatePrevNextButtons(self):
-        self.btnPrev.set_sensitive(len(self.prevHistory) != 0)
-        self.btnNext.set_sensitive(len(self.nextHistory) != 0)
+        prevSize = len(self.prevHistory)
+        nextSize = len(self.nextHistory)
+        # Set top item titles as tooltips for buttons
+        if(prevSize > 0):
+            topItem = self.prevHistory[prevSize-1]
+            self.btnPrev.set_tooltip_text(topItem.title)
+        if(nextSize > 0):
+            topItem = self.nextHistory[nextSize-1]
+            self.btnNext.set_tooltip_text(topItem.title)
+        # Emable buttons if lists are not empty, disable otherwise    
+        self.btnPrev.set_sensitive(prevSize > 0)
+        self.btnNext.set_sensitive(nextSize > 0)
         
     def createAndSetResultsModel(self):
         self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
