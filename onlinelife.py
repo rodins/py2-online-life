@@ -470,21 +470,39 @@ class OnlineLifeGui(gtk.Window):
         
     def onFirstItemReceived(self, title = ""):
         if title != "":
+            # Saving to history first
+            self.saveToPrevHistory()
+            self.nextHistory = [] # reset next items history on new results
+            self.updatePrevNextButtons()
+            # Then make changes
             self.resultsTitle = title
             self.set_title(PROG_NAME + " - " + title)
-            self.saveToHistory()
             self.createAndSetResultsModel()
             self.rangeRepeatSet.clear()
             self.nextLinks.clear()
         self.showResultsData()
 
-    def saveToHistory(self):
+    def saveToPrevHistory(self):
         if(self.resultsStore != None):
             historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
             self.prevHistory.append(historyItem)
-            self.nextHistory = []
-            self.updatePrevNextButtons()
+            
+    def saveToNextHistory(self):
+        if(self.resultsStore != None):
+            historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
+            self.nextHistory.append(historyItem)
 
+    def restoreFromHistory(self, historyItem):
+        self.resultsTitle = historyItem.title
+        self.resultsStore = historyItem.store
+        self.resultsNextLink = historyItem.nextLink
+        
+        self.set_title(PROG_NAME + " - " + self.resultsTitle)
+        self.ivResults.set_model(self.resultsStore)
+        self.rangeRepeatSet.clear()
+        self.nextLinks.clear()
+        self.showResultsData()
+        
     def updatePrevNextButtons(self):
         prevSize = len(self.prevHistory)
         nextSize = len(self.nextHistory)
@@ -671,7 +689,12 @@ class OnlineLifeGui(gtk.Window):
         self.showResultsData()
         
     def btnPrevClicked(self, widget):
-        print("btnPrev clicked")
+        self.saveToNextHistory()
+        if(len(self.prevHistory) > 0):
+            historyItem = self.prevHistory.pop()
+            self.restoreFromHistory(historyItem)
+        self.updatePrevNextButtons()
+        
         
     def btnNextClicked(self, widget):
         print("btnNext clicked")
@@ -740,7 +763,7 @@ class OnlineLifeGui(gtk.Window):
         if(iter_parent != None):
             values_parent = model.get(iter_parent, 1)
             title = values_parent[0] + " - " + title
-        self.resultsTitle = title
+            
         self.resultsLink = link
         self.resultsThread = ResultsThread(self, link, title)
         self.resultsThread.start()
