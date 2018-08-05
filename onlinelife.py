@@ -123,13 +123,13 @@ class OnlineLifeGui(gtk.Window):
         toolbar.insert(self.btnUp, -1)
         
         self.btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
-        self.btnPrev.set_tooltip_text("Go back in history")
+        #self.btnPrev.set_tooltip_text("Go back in history")
         self.btnPrev.connect("clicked", self.btnPrevClicked)
         self.btnPrev.set_sensitive(False)
         toolbar.insert(self.btnPrev, -1)
         
         self.btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
-        self.btnNext.set_tooltip_text("Go forward in history")
+        #self.btnNext.set_tooltip_text("Go forward in history")
         self.btnNext.connect("clicked", self.btnNextClicked)
         self.btnNext.set_sensitive(False)
         toolbar.insert(self.btnNext, -1)
@@ -344,6 +344,7 @@ class OnlineLifeGui(gtk.Window):
         self.resultsStore = None
         self.prevHistory = []
         self.nextHistory = []
+        self.updatePrevNextButtons()
         
     def showCategoriesSpinner(self):
         self.spCategories.show()
@@ -510,9 +511,13 @@ class OnlineLifeGui(gtk.Window):
         if(prevSize > 0):
             topItem = self.prevHistory[prevSize-1]
             self.btnPrev.set_tooltip_text(topItem.title)
+        else:
+            self.btnPrev.set_tooltip_text("No previous history items")
         if(nextSize > 0):
             topItem = self.nextHistory[nextSize-1]
             self.btnNext.set_tooltip_text(topItem.title)
+        else:
+            self.btnNext.set_tooltip_text("No next history items")
         # Emable buttons if lists are not empty, disable otherwise    
         self.btnPrev.set_sensitive(prevSize > 0)
         self.btnNext.set_sensitive(nextSize > 0)
@@ -695,9 +700,12 @@ class OnlineLifeGui(gtk.Window):
             self.restoreFromHistory(historyItem)
         self.updatePrevNextButtons()
         
-        
     def btnNextClicked(self, widget):
-        print("btnNext clicked")
+        self.saveToPrevHistory()
+        if(len(self.nextHistory) > 0):
+            historyItem = self.nextHistory.pop()
+            self.restoreFromHistory(historyItem)
+        self.updatePrevNextButtons()
         
     def get_search_link(self, page = ""):
         data = {}
