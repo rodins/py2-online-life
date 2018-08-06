@@ -491,7 +491,7 @@ class OnlineLifeGui(gtk.Window):
             historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
             self.nextHistory.append(historyItem)
 
-    #TODO: remember position
+    #TODO: remember position, do not save on refresh, save link so refresh work correctly
     def restoreFromHistory(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
