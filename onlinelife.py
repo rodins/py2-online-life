@@ -123,13 +123,11 @@ class OnlineLifeGui(gtk.Window):
         toolbar.insert(self.btnUp, -1)
         
         self.btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
-        #self.btnPrev.set_tooltip_text("Go back in history")
         self.btnPrev.connect("clicked", self.btnPrevClicked)
         self.btnPrev.set_sensitive(False)
         toolbar.insert(self.btnPrev, -1)
         
         self.btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
-        #self.btnNext.set_tooltip_text("Go forward in history")
         self.btnNext.connect("clicked", self.btnNextClicked)
         self.btnNext.set_sensitive(False)
         toolbar.insert(self.btnNext, -1)
@@ -466,7 +464,6 @@ class OnlineLifeGui(gtk.Window):
         if title != "":
             self.set_title(PROG_NAME + " - Loading...")
             self.cancelImageThreads()
-            self.resultsNextLink = ""
         self.showCenterSpinner(title == "")
         
     def onFirstItemReceived(self, title = ""):
@@ -476,6 +473,7 @@ class OnlineLifeGui(gtk.Window):
             self.nextHistory = [] # reset next items history on new results
             self.updatePrevNextButtons()
             # Then make changes
+            self.resultsNextLink = ""
             self.resultsTitle = title
             self.set_title(PROG_NAME + " - " + title)
             self.createAndSetResultsModel()
@@ -493,11 +491,11 @@ class OnlineLifeGui(gtk.Window):
             historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
             self.nextHistory.append(historyItem)
 
+    #TODO: remember position
     def restoreFromHistory(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
         self.resultsNextLink = historyItem.nextLink
-        
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.ivResults.set_model(self.resultsStore)
         self.rangeRepeatSet.clear()
@@ -722,7 +720,6 @@ class OnlineLifeGui(gtk.Window):
         query = widget.get_text().strip()
         if query != "":
             self.query = query
-            self.resultsTitle = query
             self.resultsLink = self.get_search_link()
             if self.resultsThread == None or not self.resultsThread.is_alive():
                 self.resultsThread = ResultsThread(self, self.resultsLink, query)
