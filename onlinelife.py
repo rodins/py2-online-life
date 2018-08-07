@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+#TODO: fix "cobra" parsing bug
+
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -340,6 +342,8 @@ class OnlineLifeGui(gtk.Window):
         self.actorsLink = ""
 
         self.resultsStore = None
+        self.resultsTitle = None
+        self.resultsLink = None
         self.prevHistory = []
         self.nextHistory = []
         self.updatePrevNextButtons()
@@ -410,10 +414,10 @@ class OnlineLifeGui(gtk.Window):
         self.swPlaylists.hide()
         self.swResults.set_visible(isPaging)
         self.vbCenter.set_child_packing(self.spCenter, 
-                                        not isPaging, 
-                                        False, 
-                                        1, 
-                                        gtk.PACK_START)
+                                                           not isPaging, 
+                                                           False, 
+                                                          1, 
+                                                          gtk.PACK_START)
         self.hbCenterError.hide()
         
     def showResultsData(self):
@@ -469,9 +473,10 @@ class OnlineLifeGui(gtk.Window):
     def onFirstItemReceived(self, title = ""):
         if title != "":
             # Saving to history first
-            self.saveToPrevHistory()
-            self.nextHistory = [] # reset next items history on new results
-            self.updatePrevNextButtons()
+            if(self.resultsTitle != title): # do not save on refresh when prev and current titles are equal
+                self.saveToPrevHistory() 
+                self.nextHistory = [] # reset next items history on new results
+                self.updatePrevNextButtons()
             # Then make changes
             self.resultsNextLink = ""
             self.resultsTitle = title
@@ -483,18 +488,25 @@ class OnlineLifeGui(gtk.Window):
 
     def saveToPrevHistory(self):
         if(self.resultsStore != None):
-            historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
+            historyItem = HistoryItem(self.resultsTitle,
+                                                      self.resultsStore,
+                                                      self.prevLink,
+                                                      self.resultsNextLink)
             self.prevHistory.append(historyItem)
             
     def saveToNextHistory(self):
         if(self.resultsStore != None):
-            historyItem = HistoryItem(self.resultsTitle, self.resultsStore, self.resultsNextLink)
+            historyItem = HistoryItem(self.resultsTitle,
+                                                      self.resultsStore,
+                                                      self.prevLink,
+                                                      self.resultsNextLink)
             self.nextHistory.append(historyItem)
 
     #TODO: remember position, do not save on refresh, save link so refresh work correctly
     def restoreFromHistory(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
+        self.resultsLink = historyItem.refreshLink
         self.resultsNextLink = historyItem.nextLink
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.ivResults.set_model(self.resultsStore)
@@ -647,7 +659,8 @@ class OnlineLifeGui(gtk.Window):
         
     def addToActorsModel(self, name, href):
         self.actorsStore.append([FILE_PIXBUF, name, href])
-        
+
+    #TODO: fix results from actors will not be refreshed bug
     def tvActorsRowActivated(self, treeview, path, view_column):
         model = treeview.get_model()
         actors_iter = model.get_iter(path)
@@ -720,6 +733,7 @@ class OnlineLifeGui(gtk.Window):
         query = widget.get_text().strip()
         if query != "":
             self.query = query
+            self.prevLink = self.resultsLink
             self.resultsLink = self.get_search_link()
             if self.resultsThread == None or not self.resultsThread.is_alive():
                 self.resultsThread = ResultsThread(self, self.resultsLink, query)
@@ -768,7 +782,7 @@ class OnlineLifeGui(gtk.Window):
         if(iter_parent != None):
             values_parent = model.get(iter_parent, 1)
             title = values_parent[0] + " - " + title
-            
+        self.prevLink = self.resultsLink
         self.resultsLink = link
         self.resultsThread = ResultsThread(self, link, title)
         self.resultsThread.start()
@@ -1399,9 +1413,10 @@ class PlayItemDialog:
         dialog.destroy()
 
 class HistoryItem:
-    def __init__(self, title, store, nextLink):
+    def __init__(self, title, store, refreshLink, nextLink):
         self.title = title
         self.store = store
+        self.refreshLink = refreshLink
         self.nextLink = nextLink
                     
 def main():
