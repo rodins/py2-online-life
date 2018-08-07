@@ -491,7 +491,8 @@ class OnlineLifeGui(gtk.Window):
             historyItem = HistoryItem(self.resultsTitle,
                                                       self.resultsStore,
                                                       self.prevLink,
-                                                      self.resultsNextLink)
+                                                      self.resultsNextLink,
+                                                      self.getResultsPosition())
             self.prevHistory.append(historyItem)
             
     def saveToNextHistory(self):
@@ -499,7 +500,8 @@ class OnlineLifeGui(gtk.Window):
             historyItem = HistoryItem(self.resultsTitle,
                                                       self.resultsStore,
                                                       self.prevLink,
-                                                      self.resultsNextLink)
+                                                      self.resultsNextLink,
+                                                      self.getResultsPosition())
             self.nextHistory.append(historyItem)
 
     #TODO: remember position
@@ -508,6 +510,9 @@ class OnlineLifeGui(gtk.Window):
         self.resultsStore = historyItem.store
         self.resultsLink = historyItem.refreshLink
         self.resultsNextLink = historyItem.nextLink
+        # Restore position
+        if historyItem.resultsPosition != None:
+            self.ivResults.scroll_to_path(historyItem.resultsPosition, False, 0, 0)
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.ivResults.set_model(self.resultsStore)
         self.rangeRepeatSet.clear()
@@ -555,6 +560,12 @@ class OnlineLifeGui(gtk.Window):
                 self.resultsNextLink = link
         else:
             self.resultsNextLink = ""
+
+    def getResultsPosition(self):
+        visible_range = self.ivResults.get_visible_range()
+        if visible_range != None:
+            return visible_range[1][0] # use indexTo as position
+        return None
     
     def onResultsDraw(self, widget, event):
         visible_range = self.ivResults.get_visible_range()
@@ -1414,11 +1425,12 @@ class PlayItemDialog:
         dialog.destroy()
 
 class HistoryItem:
-    def __init__(self, title, store, refreshLink, nextLink):
+    def __init__(self, title, store, refreshLink, nextLink, resultsPosition):
         self.title = title
         self.store = store
         self.refreshLink = refreshLink
         self.nextLink = nextLink
+        self.resultsPosition = resultsPosition
                     
 def main():
     gobject.threads_init()
