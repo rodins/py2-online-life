@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-#TODO: fix "cobra" parsing bug
+#TODO: fix "cobra" parsing bug, fix "fiction" parsing bug
 
 import pygtk
 pygtk.require('2.0')
@@ -502,7 +502,7 @@ class OnlineLifeGui(gtk.Window):
                                                       self.resultsNextLink)
             self.nextHistory.append(historyItem)
 
-    #TODO: remember position, do not save on refresh, save link so refresh work correctly
+    #TODO: remember position
     def restoreFromHistory(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
@@ -660,13 +660,14 @@ class OnlineLifeGui(gtk.Window):
     def addToActorsModel(self, name, href):
         self.actorsStore.append([FILE_PIXBUF, name, href])
 
-    #TODO: fix results from actors will not be refreshed bug
     def tvActorsRowActivated(self, treeview, path, view_column):
         model = treeview.get_model()
         actors_iter = model.get_iter(path)
         values = model.get(actors_iter, 1, 2)
+        self.prevLink = self.resultsLink
+        self.resultsLink = values[1]
         if self.resultsThread == None or not self.resultsThread.is_alive():
-            self.resultsThread = ResultsThread(self, values[1], values[0])
+            self.resultsThread = ResultsThread(self, self.resultsLink, values[0])
             self.resultsThread.start()
             
     def setActorsPlayerUrl(self, playerUrl):
