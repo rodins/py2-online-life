@@ -504,17 +504,16 @@ class OnlineLifeGui(gtk.Window):
                                                       self.getResultsPosition())
             self.nextHistory.append(historyItem)
 
-    #TODO: remember position
     def restoreFromHistory(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
         self.resultsLink = historyItem.refreshLink
         self.resultsNextLink = historyItem.nextLink
+        self.ivResults.set_model(self.resultsStore)
         # Restore position
         if historyItem.resultsPosition != None:
             self.ivResults.scroll_to_path(historyItem.resultsPosition, False, 0, 0)
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
-        self.ivResults.set_model(self.resultsStore)
         self.rangeRepeatSet.clear()
         self.nextLinks.clear()
         self.showResultsData()
