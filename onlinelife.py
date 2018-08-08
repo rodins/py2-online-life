@@ -21,6 +21,9 @@ DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
 DOMAIN_NO_SUFFIX = "www.online-life."
 PROG_NAME = "Online life"
+APP_DIR_NAME = ".gtk_online_life"
+SAVES_DIR_NAME = "saves"
+SAVED_IMAGES_DIR_NAME = "saved_images"
 
 COL_PIXBUF = 0
 COL_TEXT = 1
@@ -35,6 +38,11 @@ DIR_PIXBUF = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0],
 EMPTY_POSTER = gtk.gdk.pixbuf_new_from_file(os.path.join(sys.path[0],
                                                          "images",
                                                          "blank.png"))
+HOME = os.path.expanduser("~")
+APP_SAVES_DIR = os.path.join(HOME, APP_DIR_NAME, SAVES_DIR_NAME)
+APP_SAVED_IMAGES_DIR = os.path.join(HOME,
+                                    APP_DIR_NAME,
+                                    SAVED_IMAGES_DIR_NAME)
     
 class PlayItem:
     def __init__(self, js = ""):
@@ -104,11 +112,12 @@ class OnlineLifeGui(gtk.Window):
                                                 "images", 
                                                 "bookmark_24.png"))
         
-        btnSavedItems = gtk.ToolButton(bookmarkIcon)
-        btnSavedItems.set_tooltip_text("Show/hide bookmarks")
-        btnSavedItems.connect("clicked", self.btnSavedItemsClicked)
-        btnSavedItems.set_sensitive(False)
-        toolbar.insert(btnSavedItems, -1)
+        self.btnSavedItems = gtk.ToggleToolButton()
+        self.btnSavedItems.set_icon_widget(bookmarkIcon)
+        self.btnSavedItems.set_tooltip_text("Show/hide bookmarks")
+        self.btnSavedItems.connect("clicked", self.btnSavedItemsClicked)
+        toolbar.insert(self.btnSavedItems, -1)
+        
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         self.btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
@@ -116,6 +125,7 @@ class OnlineLifeGui(gtk.Window):
         self.btnRefresh.connect("clicked", self.btnRefreshClicked)
         self.btnRefresh.set_sensitive(False)
         toolbar.insert(self.btnRefresh, -1)
+        
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         self.btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
@@ -142,12 +152,14 @@ class OnlineLifeGui(gtk.Window):
         entry.connect("activate", self.entryActivated)
         entryItem.add(entry)
         toolbar.insert(entryItem, -1)
+        
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         self.btnActors = gtk.ToggleToolButton(gtk.STOCK_INFO)
         self.btnActors.set_tooltip_text("Show/hide info")
         self.btnActors.connect("clicked", self.btnActorsClicked)
         toolbar.insert(self.btnActors, -1)
+        
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
@@ -349,6 +361,7 @@ class OnlineLifeGui(gtk.Window):
         self.prevHistory = []
         self.nextHistory = []
         self.updatePrevNextButtons()
+        self.listSavedFiles()
         
     def showCategoriesSpinner(self):
         self.spCategories.show()
@@ -713,7 +726,7 @@ class OnlineLifeGui(gtk.Window):
         print("btnDeleteClicked")
         
     def btnSavedItemsClicked(self, widget):
-        print("btnSavedItems clicked")
+        self.listSavedFiles()
         
     def btnRefreshClicked(self, widget):
         if not self.resultsThread.is_alive():
@@ -858,6 +871,20 @@ class OnlineLifeGui(gtk.Window):
         scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrolledWindow.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         return scrolledWindow
+
+    def listSavedFiles(self):
+        try:
+            saves = os.listdir(APP_SAVES_DIR)
+            if len(saves) > 0:
+                self.btnSavedItems.set_sensitive(True)
+            else:
+                self.btnSavedItems.set_sensitive(False)
+            if self.btnSavedItems.get_active():
+                for filename in saves:
+                    print(filename)
+        except OSError as ex:
+            self.btnSavedItems.set_sensitive(False)
+            print ex
         
 class CategoriesThread(threading.Thread):
     def __init__(self, gui = None):
