@@ -83,7 +83,6 @@ class OnlineLifeGui(gtk.Window):
     def __init__(self):
         super(OnlineLifeGui, self).__init__()
         
-        self.set_title(PROG_NAME)
         self.connect("destroy", self.onDestroy)
         self.set_border_width(5)
         self.set_size_request(700, 400)
@@ -429,10 +428,10 @@ class OnlineLifeGui(gtk.Window):
         self.swPlaylists.hide()
         self.swResults.set_visible(isPaging)
         self.vbCenter.set_child_packing(self.spCenter, 
-                                                           not isPaging, 
-                                                           False, 
-                                                          1, 
-                                                          gtk.PACK_START)
+                                        not isPaging, 
+                                        False, 
+                                        1, 
+                                        gtk.PACK_START)
         self.hbCenterError.hide()
         
     def showResultsData(self):
@@ -561,9 +560,9 @@ class OnlineLifeGui(gtk.Window):
         else:
             self.resultsStore.append([EMPTY_POSTER, title, href, image])
     
-    def scrollToTopOfList(self):
-        firstIter = self.resultsStore.get_iter_first()
-        firstPath = self.resultsStore.get_path(firstIter)
+    def scrollToTopOfList(self, store):
+        firstIter = store.get_iter_first()
+        firstPath = store.get_path(firstIter)
         self.ivResults.scroll_to_path(firstPath, False, 0, 0)
         
     def setResultsNextLink(self, link):
@@ -582,6 +581,8 @@ class OnlineLifeGui(gtk.Window):
         return None
     
     def onResultsDraw(self, widget, event):
+        if self.btnSavedItems.get_active():
+            return
         visible_range = self.ivResults.get_visible_range()
         if visible_range != None:
             indexFrom = visible_range[0][0]
@@ -606,6 +607,8 @@ class OnlineLifeGui(gtk.Window):
         self.imageThreads = []
         
     def onResultsScrollToBottom(self, adj):
+        if self.btnSavedItems.get_active():
+            return
         value = adj.get_value()
         upper = adj.get_upper()
         page_size = adj.get_page_size()
@@ -872,6 +875,33 @@ class OnlineLifeGui(gtk.Window):
         scrolledWindow.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         return scrolledWindow
 
+    def isImageSaved(self, title):
+        return False
+
+    def getImage(self, title):
+        pass
+
+    def saveImage(self, title):
+        pass
+
+    def removeImage(self, title):
+        pass
+
+    def isLinkSaved(self, title):
+        pass
+
+    def saveLink(self, title):
+        pass
+
+    def removeLink(self, title):
+        pass
+
+    def getSavedLink(self, title):
+        filename = os.path.join(APP_SAVES_DIR, title)
+        with open(filename, "r") as f:
+            link = f.read()
+            return link
+
     def listSavedFiles(self):
         try:
             saves = os.listdir(APP_SAVES_DIR)
@@ -879,9 +909,38 @@ class OnlineLifeGui(gtk.Window):
                 self.btnSavedItems.set_sensitive(True)
             else:
                 self.btnSavedItems.set_sensitive(False)
+                
             if self.btnSavedItems.get_active():
-                for filename in saves:
-                    print(filename)
+                self.btnPrev.set_sensitive(False)
+                self.btnNext.set_sensitive(False)
+                self.set_title(PROG_NAME + " - " + "Saved items")
+                savedItemsStore = gtk.ListStore(gtk.gdk.Pixbuf,
+                                                str,
+                                                str,
+                                                str)
+                self.ivResults.set_model(savedItemsStore)
+                for title in saves:
+                    link = self.getSavedLink(title)
+                    if self.isImageSaved(title):
+                        # Not yet implemented
+                        savedItemsStore.append([None,
+                                                title,
+                                                link,
+                                                None])
+                    else:
+                        savedItemsStore.append([EMPTY_POSTER,
+                                                title,
+                                                link,
+                                                None])
+                self.scrollToTopOfList(savedItemsStore)
+            elif self.resultsTitle != None:
+                self.updatePrevNextButtons()
+                self.set_title(PROG_NAME + " - " + self.resultsTitle)
+                self.ivResults.set_model(self.resultsStore) 
+            else:
+                self.updatePrevNextButtons()
+                self.set_title(PROG_NAME)
+                self.ivResults.set_model(self.resultsStore) 
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             print ex
@@ -1093,7 +1152,8 @@ class ResultsHTMLParser(HTMLParser):
                 # self.title != "" on new results list, not paging
                 # scrolling to top after first item added to model  
                 if(self.count == 1 and self.task.title != ""):
-                    gobject.idle_add(self.task.gui.scrollToTopOfList)
+                    gobject.idle_add(self.task.gui.scrollToTopOfList,
+                                     self.task.gui.resultsStore)
                 self.count += 1
             elif self.isNavAnchor:
                 if data == "Вперед":
