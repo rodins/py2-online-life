@@ -360,6 +360,7 @@ class OnlineLifeGui(gtk.Window):
         self.prevHistory = []
         self.nextHistory = []
         self.updatePrevNextButtons()
+        self.resultsPosition = None
         self.listSavedFiles()
         
     def showCategoriesSpinner(self):
@@ -503,19 +504,19 @@ class OnlineLifeGui(gtk.Window):
     def saveToPrevHistory(self):
         if(self.resultsStore != None):
             historyItem = HistoryItem(self.resultsTitle,
-                                                      self.resultsStore,
-                                                      self.prevLink,
-                                                      self.resultsNextLink,
-                                                      self.getResultsPosition())
+                                      self.resultsStore,
+                                      self.prevLink,
+                                      self.resultsNextLink,
+                                      self.getResultsPosition())
             self.prevHistory.append(historyItem)
             
     def saveToNextHistory(self):
         if(self.resultsStore != None):
             historyItem = HistoryItem(self.resultsTitle,
-                                                      self.resultsStore,
-                                                      self.prevLink,
-                                                      self.resultsNextLink,
-                                                      self.getResultsPosition())
+                                      self.resultsStore,
+                                      self.prevLink,
+                                      self.resultsNextLink,
+                                      self.getResultsPosition())
             self.nextHistory.append(historyItem)
 
     def restoreFromHistory(self, historyItem):
@@ -526,7 +527,8 @@ class OnlineLifeGui(gtk.Window):
         self.ivResults.set_model(self.resultsStore)
         # Restore position
         if historyItem.resultsPosition != None:
-            self.ivResults.scroll_to_path(historyItem.resultsPosition, False, 0, 0)
+            self.ivResults.scroll_to_path(historyItem.resultsPosition,
+                                          False, 0, 0)
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.rangeRepeatSet.clear()
         self.nextLinks.clear()
@@ -581,7 +583,7 @@ class OnlineLifeGui(gtk.Window):
         return None
     
     def onResultsDraw(self, widget, event):
-        if self.btnSavedItems.get_active():
+        if self.resultsStore == None or self.btnSavedItems.get_active():
             return
         visible_range = self.ivResults.get_visible_range()
         if visible_range != None:
@@ -607,7 +609,7 @@ class OnlineLifeGui(gtk.Window):
         self.imageThreads = []
         
     def onResultsScrollToBottom(self, adj):
-        if self.btnSavedItems.get_active():
+        if self.resultsStore == None or self.btnSavedItems.get_active():
             return
         value = adj.get_value()
         upper = adj.get_upper()
@@ -904,7 +906,7 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: save position of results and restore it
+    # TODO: on new results, set saved items button not active
     def listSavedFiles(self):
         try:
             saves = os.listdir(APP_SAVES_DIR)
@@ -914,6 +916,7 @@ class OnlineLifeGui(gtk.Window):
                 self.btnSavedItems.set_sensitive(False)
                 
             if self.btnSavedItems.get_active():
+                self.resultsPosition = self.getResultsPosition()
                 self.btnPrev.set_sensitive(False)
                 self.btnNext.set_sensitive(False)
                 self.set_title(PROG_NAME + " - " + "Saved items")
@@ -935,14 +938,18 @@ class OnlineLifeGui(gtk.Window):
                                                 link,
                                                 None])
                 self.scrollToTopOfList(savedItemsStore)
-            elif self.resultsTitle != None:
-                self.updatePrevNextButtons()
-                self.set_title(PROG_NAME + " - " + self.resultsTitle)
-                self.ivResults.set_model(self.resultsStore) 
             else:
                 self.updatePrevNextButtons()
-                self.set_title(PROG_NAME)
-                self.ivResults.set_model(self.resultsStore) 
+                # FIRST set model
+                self.ivResults.set_model(self.resultsStore)
+                # THEN restore position
+                if self.resultsPosition != None:
+                    self.ivResults.scroll_to_path(self.resultsPosition,
+                                                  False, 0, 0)
+                if self.resultsTitle != None:  
+                    self.set_title(PROG_NAME + " - " + self.resultsTitle)
+                else:
+                    self.set_title(PROG_NAME)
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             print ex
