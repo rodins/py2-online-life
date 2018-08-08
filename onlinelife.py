@@ -483,6 +483,9 @@ class OnlineLifeGui(gtk.Window):
         if title != "":
             self.set_title(PROG_NAME + " - Loading...")
             self.cancelImageThreads()
+            if self.btnSavedItems.get_active():
+                self.btnSavedItems.set_active(False)
+                self.listSavedFiles()
         self.showCenterSpinner(title == "")
         
     def onFirstItemReceived(self, title = ""):
@@ -906,7 +909,8 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: on new results, set saved items button not active
+    # TODO: in playlist mode disable btnSavedItems
+    # TODO: show saved items on program start
     def listSavedFiles(self):
         try:
             saves = os.listdir(APP_SAVES_DIR)
