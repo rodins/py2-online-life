@@ -361,7 +361,7 @@ class OnlineLifeGui(gtk.Window):
         self.nextHistory = []
         self.updatePrevNextButtons()
         self.resultsPosition = None
-        self.listSavedFiles()
+        self.listSavedFiles(True) # Show save results on start
         
     def showCategoriesSpinner(self):
         self.spCategories.show()
@@ -746,7 +746,7 @@ class OnlineLifeGui(gtk.Window):
     def btnUpClicked(self, widget):
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.showResultsData()
-        self.btnSavedItems.set_sensitive(True)
+        self.listSavedFiles()
         
     def btnPrevClicked(self, widget):
         self.saveToNextHistory()
@@ -911,15 +911,17 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: show saved items on program start
     # TODO: process saved item click
-    def listSavedFiles(self):
+    def listSavedFiles(self, showOnStart = False):
         try:
             saves = os.listdir(APP_SAVES_DIR)
             if len(saves) > 0:
+                if showOnStart:
+                    self.btnSavedItems.set_active(True)
                 self.btnSavedItems.set_sensitive(True)
             else:
                 self.btnSavedItems.set_sensitive(False)
+                self.btnSavedItems.set_active(False)
                 
             if self.btnSavedItems.get_active():
                 self.resultsPosition = self.getResultsPosition()
@@ -958,6 +960,7 @@ class OnlineLifeGui(gtk.Window):
                     self.set_title(PROG_NAME)
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
+            self.btnSavedItems.set_active(False)
             print ex
         
 class CategoriesThread(threading.Thread):
