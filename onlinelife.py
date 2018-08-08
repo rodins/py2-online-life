@@ -876,10 +876,12 @@ class OnlineLifeGui(gtk.Window):
         return scrolledWindow
 
     def isImageSaved(self, title):
-        return False
+        path = os.path.join(APP_SAVED_IMAGES_DIR, title)
+        return os.path.exists(path)
 
     def getImage(self, title):
-        pass
+        path = os.path.join(APP_SAVED_IMAGES_DIR, title)
+        return gtk.gdk.pixbuf_new_from_file(path)
 
     def saveImage(self, title):
         pass
@@ -902,6 +904,7 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
+    # TODO: save position of results and restore it
     def listSavedFiles(self):
         try:
             saves = os.listdir(APP_SAVES_DIR)
@@ -922,8 +925,7 @@ class OnlineLifeGui(gtk.Window):
                 for title in saves:
                     link = self.getSavedLink(title)
                     if self.isImageSaved(title):
-                        # Not yet implemented
-                        savedItemsStore.append([None,
+                        savedItemsStore.append([self.getImage(title),
                                                 title,
                                                 link,
                                                 None])
