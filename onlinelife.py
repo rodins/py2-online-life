@@ -746,6 +746,7 @@ class OnlineLifeGui(gtk.Window):
     def btnUpClicked(self, widget):
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.showResultsData()
+        self.btnSavedItems.set_sensitive(True)
         
     def btnPrevClicked(self, widget):
         self.saveToNextHistory()
@@ -831,6 +832,7 @@ class OnlineLifeGui(gtk.Window):
         self.resultsThread.start()
         
     def onPlaylistsPreExecute(self):
+        self.btnSavedItems.set_sensitive(False)
         self.playlistsStore.clear()
         self.singlePlaylistStore.clear()
         self.showCenterSpinner(False)
@@ -909,8 +911,8 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: in playlist mode disable btnSavedItems
     # TODO: show saved items on program start
+    # TODO: process saved item click
     def listSavedFiles(self):
         try:
             saves = os.listdir(APP_SAVES_DIR)
