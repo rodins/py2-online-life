@@ -278,23 +278,25 @@ class OnlineLifeGui(gtk.Window):
         self.btnOpen.show()
         self.btnOpen.set_sensitive(False)
         
-        btnSave = gtk.Button()
+        self.btnSave = gtk.Button()
         image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
-        btnSave.set_image(image)
-        btnSave.set_tooltip_text("Add to bookmarks")
+        self.btnSave.set_image(image)
+        self.btnSave.set_tooltip_text("Add to bookmarks")
+        self.btnSave.connect("clicked", self.btnSaveClicked)
         
-        btnDelete = gtk.Button()
+        self.btnDelete = gtk.Button()
         image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
-        btnDelete.set_image(image)
-        btnDelete.set_tooltip_text("Remove from bookmarks")
+        self.btnDelete.set_image(image)
+        self.btnDelete.set_tooltip_text("Remove from bookmarks")
+        self.btnDelete.connect("clicked", self.btnDeleteClicked)
         
         hbActions = gtk.HBox(True, 1)
         hbActions.pack_start(spLinks, True, False, 10)
         hbActions.pack_start(btnLinksError, True, True, 5)
         #hbActions.pack_start(btnGetLinks, True, True, 5)
         hbActions.pack_start(self.btnOpen, True, True, 5)
-        hbActions.pack_start(btnSave, True, True, 5)
-        hbActions.pack_start(btnDelete, True, True, 5)
+        hbActions.pack_start(self.btnSave, True, True, 5)
+        hbActions.pack_start(self.btnDelete, True, True, 5)
         hbActions.show()
         frActions = gtk.Frame("Actions")
         frActions.add(hbActions)
@@ -653,10 +655,14 @@ class OnlineLifeGui(gtk.Window):
         self.spActors.hide()
         self.frInfo.hide()
         self.frActors.hide()
-        self.hbActorsError.show()
+        self.hbActorsError.show()    
+
+    def showSaveOrDeleteButton(self):
+        self.btnSave.show()
         
     def onActorsPreExecute(self):
         self.showActorsSpinner()
+        self.showSaveOrDeleteButton()
         
     def onActorsFirstItemReceived(self, info, name, href):
         self.actorsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
@@ -699,7 +705,12 @@ class OnlineLifeGui(gtk.Window):
             dialog.set_title("External link")
             dialog.run()
             dialog.destroy()
-        
+
+    def btnSaveClicked(self, widget):
+        print("btnSavedClicked")
+
+    def btnDeleteClicked(self, widget):
+        print("btnDeleteClicked")
         
     def btnSavedItemsClicked(self, widget):
         print("btnSavedItems clicked")
