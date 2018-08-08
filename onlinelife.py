@@ -643,9 +643,10 @@ class OnlineLifeGui(gtk.Window):
             self.jsThread.start()
     
     def onResultActivated(self, iconview, path):
-        resultsIter = self.resultsStore.get_iter(path)
-        self.playlistsTitle = self.resultsStore.get_value(resultsIter, 1)
-        self.actorsLink = self.resultsStore.get_value(resultsIter, 2)
+        store = iconview.get_model()
+        resultsIter = store.get_iter(path)
+        self.playlistsTitle = store.get_value(resultsIter, 1)
+        self.actorsLink = store.get_value(resultsIter, 2)
         if self.btnActors.get_active():
             self.startActorsThread()
         else:
@@ -744,7 +745,7 @@ class OnlineLifeGui(gtk.Window):
             self.resultsThread.start()
         
     def btnUpClicked(self, widget):
-        self.set_title(PROG_NAME + " - " + self.resultsTitle)
+        self.setResultsTitle()
         self.showResultsData()
         self.listSavedFiles()
         
@@ -761,6 +762,12 @@ class OnlineLifeGui(gtk.Window):
             historyItem = self.nextHistory.pop()
             self.restoreFromHistory(historyItem)
         self.updatePrevNextButtons()
+
+    def setResultsTitle(self):
+        if self.resultsTitle == None:
+            self.set_title(PROG_NAME)
+        else:
+            self.set_title(PROG_NAME + " - " + self.resultsTitle)
         
     def get_search_link(self, page = ""):
         data = {}
@@ -911,7 +918,8 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: process saved item click
+    # TODO: refresh button should be disabled in saved items
+    # TODO: implement save and remove functions
     def listSavedFiles(self, showOnStart = False):
         try:
             saves = os.listdir(APP_SAVES_DIR)
@@ -951,13 +959,10 @@ class OnlineLifeGui(gtk.Window):
                 # FIRST set model
                 self.ivResults.set_model(self.resultsStore)
                 # THEN restore position
-                if self.resultsPosition != None:
+                if self.resultsPosition != None and self.resultsStore != None:
                     self.ivResults.scroll_to_path(self.resultsPosition,
                                                   False, 0, 0)
-                if self.resultsTitle != None:  
-                    self.set_title(PROG_NAME + " - " + self.resultsTitle)
-                else:
-                    self.set_title(PROG_NAME)
+                self.setResultsTitle()
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             self.btnSavedItems.set_active(False)
