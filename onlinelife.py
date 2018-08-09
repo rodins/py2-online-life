@@ -651,6 +651,7 @@ class OnlineLifeGui(gtk.Window):
         resultsIter = store.get_iter(path)
         self.playlistsTitle = store.get_value(resultsIter, 1)
         self.actorsLink = store.get_value(resultsIter, 2)
+        self.saveImageLink = store.get_value(resultsIter, 3)
         if self.btnActors.get_active():
             self.startActorsThread()
         else:
@@ -737,17 +738,17 @@ class OnlineLifeGui(gtk.Window):
             dialog.run()
             dialog.destroy()
             
-    # TODO: save image
     def btnSaveClicked(self, widget):
         self.saveLink(self.playlistsTitle, self.actorsLink)
         self.showSaveOrDeleteButton()
         self.listSavedFiles()
+        self.saveImage(self.playlistsTitle)
 
-    # TODO: remove image
     def btnDeleteClicked(self, widget):
         self.removeLink(self.playlistsTitle)
         self.showSaveOrDeleteButton()
         self.listSavedFiles()
+        self.removeImage(self.playlistsTitle)
         
     def btnSavedItemsClicked(self, widget):
         self.listSavedFiles()
@@ -910,16 +911,26 @@ class OnlineLifeGui(gtk.Window):
         return gtk.gdk.pixbuf_new_from_file(path)
 
     def saveImage(self, title):
-        pass
+        if not os.path.exists(APP_SAVED_IMAGES_DIR):
+            os.makedirs(APP_SAVED_IMAGES_DIR)
+        path = os.path.join(APP_SAVED_IMAGES_DIR, title)
+        if self.saveImageLink != None:
+            if self.saveImageLink in self.imagesCache:
+                image = self.imagesCache[self.saveImageLink]
+                image.save(path, "png")
 
     def removeImage(self, title):
-        pass
+        path = os.path.join(APP_SAVED_IMAGES_DIR, title)
+        if os.path.exists(path):
+            os.remove(path)
 
     def isLinkSaved(self, title):
          path = os.path.join(APP_SAVES_DIR, title)
          return os.path.exists(path)
 
     def saveLink(self, title, link):
+        if not os.path.exists(APP_SAVES_DIR):
+            os.makedirs(APP_SAVES_DIR)
         path = os.path.join(APP_SAVES_DIR, title)
         with open(path, "w") as f:
             f.write(link)
@@ -935,7 +946,6 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: implement save and remove functions
     # TODO: preserve saved items position
     def listSavedFiles(self, showOnStart = False):
         try:
