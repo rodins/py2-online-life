@@ -654,12 +654,13 @@ class OnlineLifeGui(gtk.Window):
         if self.btnActors.get_active():
             self.startActorsThread()
         else:
+            # This will get actors for last constant links item if actors button is pressed
+            self.isActorsAvailable  = False
             hrefId = self.getHrefId(self.actorsLink)
             url = "http://play.cidwo.com/js.php?id=" + hrefId
             referer = "http://play.cidwo.com/player.php?newsid=" + hrefId
             self.startJsThread(url, referer)
         
-            
     def showActorsSpinner(self):
         self.btnOpen.set_sensitive(False)
         self.vbRight.show()
@@ -701,7 +702,6 @@ class OnlineLifeGui(gtk.Window):
         self.lbInfo.set_text(info)
         self.addToActorsModel(name, href)
         self.isActorsAvailable = True
-        self.actorsLink = ""
         self.showActorsData()
         
     def addToActorsModel(self, name, href):
@@ -736,9 +736,12 @@ class OnlineLifeGui(gtk.Window):
             dialog.set_title("External link")
             dialog.run()
             dialog.destroy()
-
+            
+    #TODO: save image
     def btnSaveClicked(self, widget):
-        print("btnSavedClicked")
+        self.saveLink(self.playlistsTitle, self.actorsLink)
+        self.showSaveOrDeleteButton()
+        self.listSavedFiles()
 
     def btnDeleteClicked(self, widget):
         print("btnDeleteClicked")
@@ -800,15 +803,13 @@ class OnlineLifeGui(gtk.Window):
                 self.resultsThread.start()
         
     def btnActorsClicked(self, widget):
-        if self.isActorsAvailable:
-            if self.vbRight.get_visible():
-                self.vbRight.hide()
-            elif self.actorsLink == "":
+        if self.btnActors.get_active():
+            if self.isActorsAvailable:
                 self.vbRight.show()
-            else:
+            elif self.actorsLink != "":
                 self.startActorsThread()
-        elif self.actorsLink != "":
-            self.startActorsThread()
+        else:
+            self.vbRight.hide()
     
     def startActorsThread(self):
         if self.actorsThread == None or not self.actorsThread.is_alive():
@@ -915,8 +916,10 @@ class OnlineLifeGui(gtk.Window):
          path = os.path.join(APP_SAVES_DIR, title)
          return os.path.exists(path)
 
-    def saveLink(self, title):
-        pass
+    def saveLink(self, title, link):
+        path = os.path.join(APP_SAVES_DIR, title)
+        with open(path, "w") as f:
+            f.write(link)
 
     def removeLink(self, title):
         pass
