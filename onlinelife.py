@@ -737,14 +737,17 @@ class OnlineLifeGui(gtk.Window):
             dialog.run()
             dialog.destroy()
             
-    #TODO: save image
+    # TODO: save image
     def btnSaveClicked(self, widget):
         self.saveLink(self.playlistsTitle, self.actorsLink)
         self.showSaveOrDeleteButton()
         self.listSavedFiles()
 
+    # TODO: remove image
     def btnDeleteClicked(self, widget):
-        print("btnDeleteClicked")
+        self.removeLink(self.playlistsTitle)
+        self.showSaveOrDeleteButton()
+        self.listSavedFiles()
         
     def btnSavedItemsClicked(self, widget):
         self.listSavedFiles()
@@ -922,7 +925,9 @@ class OnlineLifeGui(gtk.Window):
             f.write(link)
 
     def removeLink(self, title):
-        pass
+        path = os.path.join(APP_SAVES_DIR, title)
+        if os.path.exists(path):
+            os.remove(path)
 
     def getSavedLink(self, title):
         filename = os.path.join(APP_SAVES_DIR, title)
@@ -931,6 +936,7 @@ class OnlineLifeGui(gtk.Window):
             return link
 
     # TODO: implement save and remove functions
+    # TODO: preserve saved items position
     def listSavedFiles(self, showOnStart = False):
         try:
             saves = os.listdir(APP_SAVES_DIR)
