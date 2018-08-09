@@ -589,6 +589,13 @@ class OnlineLifeGui(gtk.Window):
         if visible_range != None:
             return visible_range[1][0] # use indexTo as position
         return None
+
+    def preserveSavedItemsPosition(self):
+        visible_range = self.ivResults.get_visible_range()
+        if visible_range != None:
+            self.savedItemsPosition = visible_range[0][0] # use indexFrom
+        else:
+            self.savedItemsPosition = None
     
     def onResultsDraw(self, widget, event):
         if self.resultsStore == None or self.btnSavedItems.get_active():
@@ -743,12 +750,14 @@ class OnlineLifeGui(gtk.Window):
         self.saveLink(self.playlistsTitle, self.actorsLink)
         self.showSaveOrDeleteButton()
         self.saveImage(self.playlistsTitle)
+        self.preserveSavedItemsPosition()
         self.listSavedFiles()
         
     def btnDeleteClicked(self, widget):
         self.removeLink(self.playlistsTitle)
         self.showSaveOrDeleteButton()
         self.removeImage(self.playlistsTitle)
+        self.preserveSavedItemsPosition()
         self.listSavedFiles()
         
     def btnSavedItemsClicked(self, widget):
@@ -945,7 +954,6 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: preserve saved items position
     def listSavedFiles(self, showOnStart = False):
         try:
             saves = os.listdir(APP_SAVES_DIR)
@@ -961,6 +969,7 @@ class OnlineLifeGui(gtk.Window):
                 self.resultsPosition = self.getResultsPosition()
                 self.btnPrev.set_sensitive(False)
                 self.btnNext.set_sensitive(False)
+                self.btnRefresh.set_sensitive(False)
                 self.set_title(PROG_NAME + " - " + "Saved items")
                 savedItemsStore = gtk.ListStore(gtk.gdk.Pixbuf,
                                                 str,
@@ -980,15 +989,13 @@ class OnlineLifeGui(gtk.Window):
                                                 link,
                                                 None])
                         
-                print self.savedItemsPosition
                 if self.savedItemsPosition == None:
                     self.scrollToTopOfList(savedItemsStore)
                 else:
                     self.ivResults.scroll_to_path(self.savedItemsPosition,
                                                   False, 0, 0)
             else: # Switch back to results
-                # Save saved item position before exiting
-                self.savedItemsPosition = self.getResultsPosition()
+                self.preserveSavedItemsPosition()
                 
                 self.updatePrevNextButtons()
                 # FIRST set model
@@ -997,8 +1004,10 @@ class OnlineLifeGui(gtk.Window):
                 if self.resultsPosition != None and self.resultsStore != None:
                     self.ivResults.scroll_to_path(self.resultsPosition,
                                                   False, 0, 0)
+                    self.btnRefresh.set_sensitive(True)
                 self.setResultsTitle()
-            self.showResultsData()
+            if not self.swResults.get_visible():
+                self.showResultsData()
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             self.btnSavedItems.set_active(False)
