@@ -362,6 +362,7 @@ class OnlineLifeGui(gtk.Window):
         self.nextHistory = []
         self.updatePrevNextButtons()
         self.resultsPosition = None
+        self.savedItemsPosition = None
         self.listSavedFiles(True) # Show save results on start
         
     def showCategoriesSpinner(self):
@@ -978,8 +979,17 @@ class OnlineLifeGui(gtk.Window):
                                                 title,
                                                 link,
                                                 None])
-                self.scrollToTopOfList(savedItemsStore)
+                        
+                print self.savedItemsPosition
+                if self.savedItemsPosition == None:
+                    self.scrollToTopOfList(savedItemsStore)
+                else:
+                    self.ivResults.scroll_to_path(self.savedItemsPosition,
+                                                  False, 0, 0)
             else: # Switch back to results
+                # Save saved item position before exiting
+                self.savedItemsPosition = self.getResultsPosition()
+                
                 self.updatePrevNextButtons()
                 # FIRST set model
                 self.ivResults.set_model(self.resultsStore)
