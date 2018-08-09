@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 #TODO: fix "cobra" parsing bug, fix "fiction" parsing bug
+#TODO: add info button to playItemDialog
 
 import pygtk
 pygtk.require('2.0')
@@ -436,7 +437,10 @@ class OnlineLifeGui(gtk.Window):
         self.hbCenterError.hide()
         
     def showResultsData(self):
-        self.btnRefresh.set_sensitive(True)
+        if self.btnSavedItems.get_active():
+            self.btnRefresh.set_sensitive(False)
+        else:
+            self.btnRefresh.set_sensitive(True)
         self.btnUp.set_sensitive(False)
         self.spCenter.hide()
         self.spCenter.stop()
@@ -872,7 +876,6 @@ class OnlineLifeGui(gtk.Window):
             sizeThread = LinksSizeThread(self, values[0], values[1], values[2])
             sizeThread.start()
             
-        
     def createTreeView(self):
         treeView = gtk.TreeView()
         
@@ -924,7 +927,6 @@ class OnlineLifeGui(gtk.Window):
             link = f.read()
             return link
 
-    # TODO: refresh button should be disabled in saved items
     # TODO: implement save and remove functions
     def listSavedFiles(self, showOnStart = False):
         try:
@@ -937,7 +939,7 @@ class OnlineLifeGui(gtk.Window):
                 self.btnSavedItems.set_sensitive(False)
                 self.btnSavedItems.set_active(False)
                 
-            if self.btnSavedItems.get_active():
+            if self.btnSavedItems.get_active(): # Show saved items
                 self.resultsPosition = self.getResultsPosition()
                 self.btnPrev.set_sensitive(False)
                 self.btnNext.set_sensitive(False)
@@ -960,7 +962,7 @@ class OnlineLifeGui(gtk.Window):
                                                 link,
                                                 None])
                 self.scrollToTopOfList(savedItemsStore)
-            else:
+            else: # Switch back to results
                 self.updatePrevNextButtons()
                 # FIRST set model
                 self.ivResults.set_model(self.resultsStore)
@@ -969,6 +971,7 @@ class OnlineLifeGui(gtk.Window):
                     self.ivResults.scroll_to_path(self.resultsPosition,
                                                   False, 0, 0)
                 self.setResultsTitle()
+            self.showResultsData()
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             self.btnSavedItems.set_active(False)
