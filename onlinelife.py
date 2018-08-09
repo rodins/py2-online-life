@@ -649,9 +649,9 @@ class OnlineLifeGui(gtk.Window):
     def onResultActivated(self, iconview, path):
         store = iconview.get_model()
         resultsIter = store.get_iter(path)
+        self.savedItemImage = store.get_value(resultsIter, 0)
         self.playlistsTitle = store.get_value(resultsIter, 1)
         self.actorsLink = store.get_value(resultsIter, 2)
-        self.saveImageLink = store.get_value(resultsIter, 3)
         if self.btnActors.get_active():
             self.startActorsThread()
         else:
@@ -741,14 +741,14 @@ class OnlineLifeGui(gtk.Window):
     def btnSaveClicked(self, widget):
         self.saveLink(self.playlistsTitle, self.actorsLink)
         self.showSaveOrDeleteButton()
-        self.listSavedFiles()
         self.saveImage(self.playlistsTitle)
-
+        self.listSavedFiles()
+        
     def btnDeleteClicked(self, widget):
         self.removeLink(self.playlistsTitle)
         self.showSaveOrDeleteButton()
-        self.listSavedFiles()
         self.removeImage(self.playlistsTitle)
+        self.listSavedFiles()
         
     def btnSavedItemsClicked(self, widget):
         self.listSavedFiles()
@@ -914,10 +914,8 @@ class OnlineLifeGui(gtk.Window):
         if not os.path.exists(APP_SAVED_IMAGES_DIR):
             os.makedirs(APP_SAVED_IMAGES_DIR)
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
-        if self.saveImageLink != None:
-            if self.saveImageLink in self.imagesCache:
-                image = self.imagesCache[self.saveImageLink]
-                image.save(path, "png")
+        if self.savedItemImage != None:
+                self.savedItemImage.save(path, "png")
 
     def removeImage(self, title):
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
