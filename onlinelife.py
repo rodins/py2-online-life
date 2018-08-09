@@ -680,7 +680,12 @@ class OnlineLifeGui(gtk.Window):
         self.hbActorsError.show()    
 
     def showSaveOrDeleteButton(self):
-        self.btnSave.show()
+        if self.isLinkSaved(self.playlistsTitle):
+            self.btnDelete.show()
+            self.btnSave.hide()
+        else:
+            self.btnSave.show()
+            self.btnDelete.hide()
         
     def onActorsPreExecute(self):
         self.showActorsSpinner()
@@ -904,7 +909,8 @@ class OnlineLifeGui(gtk.Window):
         pass
 
     def isLinkSaved(self, title):
-        pass
+         path = os.path.join(APP_SAVES_DIR, title)
+         return os.path.exists(path)
 
     def saveLink(self, title):
         pass
