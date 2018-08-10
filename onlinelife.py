@@ -1592,7 +1592,7 @@ class PlayItemDialog:
 
         # Add info button to dialog
         if not self.gui.btnActors.get_active():
-            dialog.add_button("Info", self.RESPONSE_INFO)
+            dialog.add_button(gtk.STOCK_INFO, self.RESPONSE_INFO)
         
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
