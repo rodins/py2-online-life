@@ -1576,6 +1576,10 @@ class PlayItemDialog:
     def createDialog(self):
         label_width = 290
         label = gtk.Label(self.play_item.comment.strip())
+
+        dialog = gtk.Dialog("Process links",
+                                        self.gui,
+                                        gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
        
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
@@ -1585,18 +1589,12 @@ class PlayItemDialog:
                 label.set_justify(gtk.JUSTIFY_CENTER)
                 label.set_size_request(label_width, -1)
             
-            dialog = gtk.Dialog("Process links",
-                                             self.gui,
-                                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                                             (self.play_title, self.RESPONSE_MP4,
-                                              gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,))
+            dialog.add_button(self.play_title, self.RESPONSE_MP4)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT)
         else:
-            dialog = gtk.Dialog("Process links",
-                                            self.gui,
-                                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                                            (self.flv_title, self.RESPONSE_FLV,
-                                             self.mp4_title, self.RESPONSE_MP4,
-                                             gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,))
+            dialog.add_button(self.play_title, self.RESPONSE_FLV)
+            dialog.add_button(self.play_title, self.RESPONSE_MP4)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT)
             
         if self.mp4_size == "":
             dialog.set_response_sensitive(self.RESPONSE_MP4, False)
