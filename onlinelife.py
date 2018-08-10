@@ -1447,8 +1447,13 @@ class LinksSizeThread(threading.Thread):
         PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
         
     def run(self):
-        flv_size = getLinkSize(self.flv)
-        mp4_size = getLinkSize(self.mp4)
+        # Some optimization
+        if self.flv == self.mp4:
+            mp4_size = getLinkSize(self.mp4)
+            flv_size = mp4_size
+        else:
+            flv_size = getLinkSize(self.flv)
+            mp4_size = getLinkSize(self.mp4)
         gobject.idle_add(self.runPlayItemDialog, 
                          flv_size, 
                          mp4_size)
