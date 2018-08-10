@@ -1573,7 +1573,12 @@ class PlayItemDialog:
         self.createDialog()
         
     def createDialog(self):
+        label_width = 300
         label = gtk.Label(self.play_item.comment)
+        label.set_line_wrap(True)
+        label.set_size_request(label_width, -1)
+        label.set_justify(gtk.JUSTIFY_CENTER)
+        label.set_alignment(1.0, 0.5)
 
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
