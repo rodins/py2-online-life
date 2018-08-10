@@ -1580,11 +1580,11 @@ class PlayItemDialog:
         dialog = gtk.Dialog("Process links",
                                         self.gui,
                                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
-       
+        
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
             # If title too long make label width smaller to activate line wrap
-            if len(self.play_item.comment.strip()) > 37:
+            if len(self.play_item.comment.strip()) > 45:
                 label.set_line_wrap(True)
                 label.set_justify(gtk.JUSTIFY_CENTER)
                 label.set_size_request(label_width, -1)
