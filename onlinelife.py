@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-#TODO: fix "cobra" parsing bug, fix "fiction" parsing bug
 #TODO: add info button to playItemDialog
+#TODO: optimize playItemDialog
 
 import pygtk
 pygtk.require('2.0')
@@ -1156,6 +1156,7 @@ class ResultsHTMLParser(HTMLParser):
         self.isNavAnchor = False
         self.count = 0
         self.nextLink = ""
+        self.data = ""
         HTMLParser.__init__(self)
         
     def handle_starttag(self, tag, attrs):
@@ -1201,6 +1202,11 @@ class ResultsHTMLParser(HTMLParser):
             if self.isPosterDiv:
                 self.isPosterAnchor = False
                 self.isPosterDiv = False
+                gobject.idle_add(self.task.gui.addToResultsModel, 
+                                 self.data, 
+                                 self.href, 
+                                 self.image)
+                self.data = ""
             if self.isNavAnchor:
                 self.isNavAnchor = False
         elif tag == "body":
@@ -1213,10 +1219,8 @@ class ResultsHTMLParser(HTMLParser):
                 if(self.count == 0):
                     gobject.idle_add(self.task.gui.onFirstItemReceived, 
                                      self.task.title)
-                gobject.idle_add(self.task.gui.addToResultsModel, 
-                                 data, 
-                                 self.href, 
-                                 self.image)
+                self.data += data
+                
                 # self.title != "" on new results list, not paging
                 # scrolling to top after first item added to model  
                 if(self.count == 1 and self.task.title != ""):
