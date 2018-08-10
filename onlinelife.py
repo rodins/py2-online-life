@@ -1451,6 +1451,9 @@ class LinksSizeThread(threading.Thread):
         if self.flv == self.mp4:
             mp4_size = getLinkSize(self.mp4)
             flv_size = mp4_size
+        elif self.mp4.rfind("?download") != -1:
+            mp4_size = getLinkSize(self.mp4)
+            flv_size = ""
         else:
             flv_size = getLinkSize(self.flv)
             mp4_size = getLinkSize(self.mp4)
