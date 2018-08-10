@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-#TODO: optimize playItemDialog
-#TODO: add nothing found dialog to links size task
-
 import pygtk
 pygtk.require('2.0')
 import gtk
