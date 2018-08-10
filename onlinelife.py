@@ -1459,6 +1459,7 @@ class JsThread(threading.Thread):
         self.jsUrl = url
         self.referer = referer
         self.isCancelled = False
+        self.trailersTitle = self.gui.playlistsTitle
         threading.Thread.__init__(self)
         
     def cancel(self):
@@ -1544,7 +1545,7 @@ class JsThread(threading.Thread):
             play_item = PlayItem(js.decode('cp1251'))
             if play_item.comment != "":
                 if len(play_item.comment) == 1:
-                    play_item.comment = "Fix trailer title"
+                    play_item.comment = self.trailersTitle
                 flv_size = getLinkSize(play_item.file)
                 mp4_size = getLinkSize(play_item.download)
                 gobject.idle_add(self.runPlayItemDialog, 
@@ -1573,15 +1574,17 @@ class PlayItemDialog:
         self.createDialog()
         
     def createDialog(self):
-        label_width = 300
-        label = gtk.Label(self.play_item.comment)
-        label.set_line_wrap(True)
-        label.set_size_request(label_width, -1)
-        label.set_justify(gtk.JUSTIFY_CENTER)
-        label.set_alignment(1.0, 0.5)
-
+        label_width = 290
+        label = gtk.Label(self.play_item.comment.strip())
+       
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
+            # If title too long make label width smaller to activate line wrap
+            if len(self.play_item.comment.strip()) > 37:
+                label.set_line_wrap(True)
+                label.set_justify(gtk.JUSTIFY_CENTER)
+                label.set_size_request(label_width, -1)
+            
             dialog = gtk.Dialog("Process links",
                                              self.gui,
                                              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
