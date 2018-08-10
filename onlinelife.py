@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-#TODO: add info button to playItemDialog
 #TODO: optimize playItemDialog
+#TODO: add nothing found dialog to links size task
 
 import pygtk
 pygtk.require('2.0')
@@ -1574,6 +1574,7 @@ class PlayItemDialog:
         self.play_item = play_item
         self.RESPONSE_FLV = 1
         self.RESPONSE_MP4 = 2
+        self.RESPONSE_INFO = 3
         self.flv_size = flv_size
         self.mp4_size = mp4_size
         self.flv_title = "FLV" + flv_size
@@ -1588,6 +1589,10 @@ class PlayItemDialog:
         dialog = gtk.Dialog("Process links",
                                         self.gui,
                                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
+
+        # Add info button to dialog
+        if not self.gui.btnActors.get_active():
+            dialog.add_button("Info", self.RESPONSE_INFO)
         
         # If we have one link use dialog with one play button and cancel
         if self.flv_size == ""  or self.play_item.file == self.play_item.download:
@@ -1614,6 +1619,9 @@ class PlayItemDialog:
             Popen(["mpv", self.play_item.file])
         elif response == self.RESPONSE_MP4:
             Popen(["mpv", self.play_item.download])
+        elif response == self.RESPONSE_INFO:
+            self.gui.btnActors.set_active(True)
+            self.gui.startActorsThread()
         dialog.destroy()
 
 class HistoryItem:
