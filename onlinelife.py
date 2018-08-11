@@ -67,16 +67,6 @@ class PlayItem:
             if comment_begin != -1 and comment_end != -1:
                 self.comment = js[comment_begin+11: comment_end]
     
-def stringToFile(page):
-    print("Saving...")
-    with open("Home.html", "w") as f:
-        f.write(page)
-
-def fileToString():
-    with open("Home.html", "r") as f:
-        page = f.read()
-        return page
-
 class OnlineLifeGui(gtk.Window):
     def __init__(self):
         super(OnlineLifeGui, self).__init__()
