@@ -90,7 +90,7 @@ class OnlineLifeGui(gtk.Window):
         
         btnCategories = gtk.ToggleToolButton(gtk.STOCK_DIRECTORY)
         btnCategories.set_tooltip_text("Show/hide categories")
-        btnCategories.connect("clicked", self.btnCategoriesClicked)
+        btnCategories.connect("clicked", self.btn_categories_clicked)
         toolbar.insert(btnCategories, -1)
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
@@ -178,7 +178,7 @@ class OnlineLifeGui(gtk.Window):
         self.spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
         
         btnCategoriesError = gtk.Button("Repeat")
-        btnCategoriesError.connect("clicked", self.btnCategoriesErrorClicked)
+        btnCategoriesError.connect("clicked", self.btn_categories_error_clicked)
         btnCategoriesError.show()
         self.hbCategoriesError = gtk.HBox(False, 1)
         self.hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
@@ -212,15 +212,15 @@ class OnlineLifeGui(gtk.Window):
         self.swResults.add(self.ivResults)
         self.swResults.show_all()
         vadj = self.swResults.get_vadjustment()
-        vadj.connect("value-changed", self.onResultsScrollToBottom)
-        self.ivResults.connect("expose-event", self.onResultsDraw)
-        self.ivResults.connect("item-activated", self.onResultActivated)
+        vadj.connect("value-changed", self.on_results_scroll_to_bottom)
+        self.ivResults.connect("expose-event", self.on_results_draw)
+        self.ivResults.connect("item-activated", self.on_result_activated)
         
         self.spCenter = gtk.Spinner()
         self.spCenter.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
         
         btnCenterError = gtk.Button("Repeat")
-        btnCenterError.connect("clicked", self.btnCenterErrorClicked)
+        btnCenterError.connect("clicked", self.btn_center_error_clicked)
         btnCenterError.show()
         self.hbCenterError = gtk.HBox(False, 1)
         self.hbCenterError.pack_start(btnCenterError, True, False, 10)
@@ -239,7 +239,7 @@ class OnlineLifeGui(gtk.Window):
         self.frInfo.add(self.lbInfo)
         
         self.tvActors = self.createTreeView()
-        self.tvActors.connect("row-activated", self.tvActorsRowActivated)
+        self.tvActors.connect("row-activated", self.tv_actors_row_activated)
         swActors = self.createScrolledWindow()
         swActors.add(self.tvActors)
         swActors.show_all()
@@ -263,17 +263,12 @@ class OnlineLifeGui(gtk.Window):
         btnLinksError.set_image(image)
         btnLinksError.set_tooltip_text("Repeat")
         
-        #btnGetLinks = gtk.Button()
-        #image = gtk.image_new_from_stock(gtk.STOCK_COPY, gtk.ICON_SIZE_BUTTON)
-        #btnGetLinks.set_image(image)
-        #btnGetLinks.set_tooltip_text("Get links")
-        
         self.btnOpen = gtk.Button()
         image = gtk.image_new_from_stock(gtk.STOCK_DIRECTORY, gtk.ICON_SIZE_BUTTON)
         self.btnOpen.set_image(image)
         self.btnOpen.set_label("Open")
         self.btnOpen.set_tooltip_text("Get movie links or serial parts list")
-        self.btnOpen.connect("clicked", self.btnOpenClicked)
+        self.btnOpen.connect("clicked", self.btn_open_clicked)
         self.btnOpen.show()
         self.btnOpen.set_sensitive(False)
         
@@ -281,18 +276,17 @@ class OnlineLifeGui(gtk.Window):
         image = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
         self.btnSave.set_image(image)
         self.btnSave.set_tooltip_text("Add to bookmarks")
-        self.btnSave.connect("clicked", self.btnSaveClicked)
+        self.btnSave.connect("clicked", self.btn_save_clicked)
         
         self.btnDelete = gtk.Button()
         image = gtk.image_new_from_stock(gtk.STOCK_REMOVE, gtk.ICON_SIZE_BUTTON)
         self.btnDelete.set_image(image)
         self.btnDelete.set_tooltip_text("Remove from bookmarks")
-        self.btnDelete.connect("clicked", self.btnDeleteClicked)
+        self.btnDelete.connect("clicked", self.btn_delete_clicked)
         
         hbActions = gtk.HBox(True, 1)
         hbActions.pack_start(spLinks, True, False, 10)
         hbActions.pack_start(btnLinksError, True, True, 5)
-        #hbActions.pack_start(btnGetLinks, True, True, 5)
         hbActions.pack_start(self.btnOpen, True, True, 5)
         hbActions.pack_start(self.btnSave, True, True, 5)
         hbActions.pack_start(self.btnDelete, True, True, 5)
@@ -347,70 +341,70 @@ class OnlineLifeGui(gtk.Window):
         self.resultsLink = None
         self.prevHistory = []
         self.nextHistory = []
-        self.updatePrevNextButtons()
+        self.update_prev_next_buttons()
         self.resultsPosition = None
         self.savedItemsPosition = None
         self.listSavedFiles(True) # Show save results on start
         
-    def showCategoriesSpinner(self):
+    def show_categories_spinner(self):
         self.spCategories.show()
         self.spCategories.start()
         self.swCategories.hide()
         self.hbCategoriesError.hide()
     
-    def showCategoriesData(self):
+    def show_categories_data(self):
         self.spCategories.hide()
         self.spCategories.stop()
         self.swCategories.show()
         self.hbCategoriesError.hide()
     
-    def showCategoriesError(self):
+    def show_categories_error(self):
         self.spCategories.hide()
         self.spCategories.stop()
         self.swCategories.hide()
         self.hbCategoriesError.show()
         
-    def onCategoriesPreExecute(self):
+    def on_categories_pre_execute(self):
         self.treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
-        self.showCategoriesSpinner()
+        self.show_categories_spinner()
         
-    def addMainToRoot(self):
+    def add_main_to_root(self):
         self.itMain = self.treestore.append(None, [DIR_PIXBUF, "Главная", DOMAIN])
         
-    def addToMain(self, title, href):
+    def add_to_main(self, title, href):
         self.treestore.append(self.itMain, [FILE_PIXBUF, title, href])
         
-    def addDropToRoot(self, title, href):
+    def add_drop_to_root(self, title, href):
         self.itDrop = self.treestore.append(None, [DIR_PIXBUF, title, href])
         
-    def addToDrop(self, title, href):
+    def add_to_drop(self, title, href):
         self.treestore.append(self.itDrop, [FILE_PIXBUF, title, href])
         
     #TODO: use on first item reseived not on post execute   
-    def onCategoriesPostExecute(self):
+    def on_categories_post_execute(self):
         self.tvCategories.set_model(self.treestore)
-        self.showCategoriesData()
+        self.show_categories_data()
         
-    def onCategoriesError(self):
-        self.showCategoriesError()
+    def on_categories_error(self):
+        self.show_categories_error()
         
-    def btnCategoriesClicked(self, widget):
+    def btn_categories_clicked(self, widget):
         if self.vbLeft.get_visible():
             self.vbLeft.hide()
         else:
             self.vbLeft.show()
             if self.tvCategories.get_model() != None:
-                self.showCategoriesData()
+                self.show_categories_data()
             elif self.categoriesThread == None or not self.categoriesThread.is_alive():
                 self.categoriesThread = CategoriesThread(self)
                 self.categoriesThread.start()
                 
-    def btnCategoriesErrorClicked(self, widget):
+    def btn_categories_error_clicked(self, widget):
         if not self.categoriesThread.is_alive():
             self.categoriesThread = CategoriesThread(self)
             self.categoriesThread.start()
     
-    def showCenterSpinner(self, isPaging):
+    def show_center_spinner(self, isPaging):
         self.btnRefresh.set_sensitive(False)
         self.btnUp.set_sensitive(False)
         self.spCenter.show()
@@ -424,7 +418,7 @@ class OnlineLifeGui(gtk.Window):
                                         gtk.PACK_START)
         self.hbCenterError.hide()
         
-    def showResultsData(self):
+    def show_results_data(self):
         if self.btnSavedItems.get_active():
             self.btnRefresh.set_sensitive(False)
         else:
@@ -436,7 +430,7 @@ class OnlineLifeGui(gtk.Window):
         self.swResults.show()
         self.hbCenterError.hide()
         
-    def showPlaylsitsData(self):
+    def show_playlists_data(self):
         self.set_title(PROG_NAME + " - " + self.playlistsTitle)
         self.btnUp.set_sensitive(True)
         self.spCenter.hide()
@@ -445,7 +439,7 @@ class OnlineLifeGui(gtk.Window):
         self.swResults.hide()
         self.hbCenterError.hide()
         
-    def showCenterError(self, title):
+    def show_center_error(self, title):
         isPaging = (title == "")
         if title == "playlists_error":
             self.playlistsError = True
@@ -460,8 +454,9 @@ class OnlineLifeGui(gtk.Window):
         self.swResults.set_visible(isPaging)
         self.vbCenter.set_child_packing(self.hbCenterError, not isPaging, False, 1, gtk.PACK_START)
         self.hbCenterError.show()
-        
-    def btnCenterErrorClicked(self, widget):
+
+    # TODO: implement playlists error    
+    def btn_center_error_clicked(self, widget):
         if self.playlistsError:
             print "Not yet implemented"
         else:
@@ -471,50 +466,50 @@ class OnlineLifeGui(gtk.Window):
                                                    self.resultsThread.title)
                 self.resultsThread.start()
         
-    def onResultsPreExecute(self, title):
+    def on_results_pre_execute(self, title):
         if title != "":
             self.set_title(PROG_NAME + " - Loading...")
-            self.cancelImageThreads()
+            self.cancel_image_threads()
             if self.btnSavedItems.get_active():
                 self.btnSavedItems.set_active(False)
                 self.listSavedFiles()
-        self.showCenterSpinner(title == "")
+        self.show_center_spinner(title == "")
         
-    def onFirstItemReceived(self, title = ""):
+    def on_first_item_received(self, title = ""):
         if title != "":
             # Saving to history first
             if(self.resultsTitle != title): # do not save on refresh when prev and current titles are equal
-                self.saveToPrevHistory() 
+                self.save_to_prev_history() 
                 self.nextHistory = [] # reset next items history on new results
-                self.updatePrevNextButtons()
+                self.update_prev_next_buttons()
             # Then make changes
             self.resultsNextLink = ""
             self.resultsTitle = title
             self.set_title(PROG_NAME + " - " + title)
-            self.createAndSetResultsModel()
+            self.create_and_set_results_model()
             self.rangeRepeatSet.clear()
             self.nextLinks.clear()
-        self.showResultsData()
+        self.show_results_data()
 
-    def saveToPrevHistory(self):
+    def save_to_prev_history(self):
         if(self.resultsStore != None):
             historyItem = HistoryItem(self.resultsTitle,
                                       self.resultsStore,
                                       self.prevLink,
                                       self.resultsNextLink,
-                                      self.getResultsPosition())
+                                      self.get_results_position())
             self.prevHistory.append(historyItem)
             
-    def saveToNextHistory(self):
+    def save_to_next_history(self):
         if(self.resultsStore != None):
             historyItem = HistoryItem(self.resultsTitle,
                                       self.resultsStore,
                                       self.prevLink,
                                       self.resultsNextLink,
-                                      self.getResultsPosition())
+                                      self.get_results_position())
             self.nextHistory.append(historyItem)
 
-    def restoreFromHistory(self, historyItem):
+    def restore_from_history(self, historyItem):
         self.resultsTitle = historyItem.title
         self.resultsStore = historyItem.store
         self.resultsLink = historyItem.refreshLink
@@ -527,9 +522,9 @@ class OnlineLifeGui(gtk.Window):
         self.set_title(PROG_NAME + " - " + self.resultsTitle)
         self.rangeRepeatSet.clear()
         self.nextLinks.clear()
-        self.showResultsData()
+        self.show_results_data()
         
-    def updatePrevNextButtons(self):
+    def update_prev_next_buttons(self):
         prevSize = len(self.prevHistory)
         nextSize = len(self.nextHistory)
         # Set top item titles as tooltips for buttons
@@ -547,22 +542,22 @@ class OnlineLifeGui(gtk.Window):
         self.btnPrev.set_sensitive(prevSize > 0)
         self.btnNext.set_sensitive(nextSize > 0)
         
-    def createAndSetResultsModel(self):
+    def create_and_set_results_model(self):
         self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
         self.ivResults.set_model(self.resultsStore) 
         
-    def addToResultsModel(self, title, href, image):
+    def add_to_results_model(self, title, href, image):
         if image in self.imagesCache:
             self.resultsStore.append([self.imagesCache[image], title, href, image])
         else:
             self.resultsStore.append([EMPTY_POSTER, title, href, image])
     
-    def scrollToTopOfList(self, store):
+    def scroll_to_top_of_list(self, store):
         firstIter = store.get_iter_first()
         firstPath = store.get_path(firstIter)
         self.ivResults.scroll_to_path(firstPath, False, 0, 0)
         
-    def setResultsNextLink(self, link):
+    def set_results_next_link(self, link):
         if link != "":
             if link.find("http") == -1:
                 self.resultsNextLink = self.get_search_link(link)
@@ -571,20 +566,20 @@ class OnlineLifeGui(gtk.Window):
         else:
             self.resultsNextLink = ""
 
-    def getResultsPosition(self):
+    def get_results_position(self):
         visible_range = self.ivResults.get_visible_range()
         if visible_range != None:
             return visible_range[1][0] # use indexTo as position
         return None
 
-    def preserveSavedItemsPosition(self):
+    def preserve_saved_items_position(self):
         visible_range = self.ivResults.get_visible_range()
         if visible_range != None:
             self.savedItemsPosition = visible_range[0][0] # use indexFrom
         else:
             self.savedItemsPosition = None
     
-    def onResultsDraw(self, widget, event):
+    def on_results_draw(self, widget, event):
         if self.resultsStore == None or self.btnSavedItems.get_active():
             return
         visible_range = self.ivResults.get_visible_range()
@@ -603,14 +598,14 @@ class OnlineLifeGui(gtk.Window):
                         self.imageThreads.append(imageThread)
                         imageThread.start()
     
-    def cancelImageThreads(self):
+    def cancel_image_threads(self):
         for thread in self.imageThreads:
             if thread.is_alive():
                 print "Cancelling thread..."
                 thread.cancel()
         self.imageThreads = []
         
-    def onResultsScrollToBottom(self, adj):
+    def on_results_scroll_to_bottom(self, adj):
         if self.resultsStore == None or self.btnSavedItems.get_active():
             return
         value = adj.get_value()
@@ -624,7 +619,7 @@ class OnlineLifeGui(gtk.Window):
                     self.resultsThread = ResultsThread(self, self.resultsNextLink)
                     self.resultsThread.start()
                 
-    def getHrefId(self, href):
+    def get_href_id(self, href):
         id_begin = href.find(DOMAIN_NO_SUFFIX)
         # id_begin detection make suffix independent
         if id_begin != -1:
@@ -635,13 +630,13 @@ class OnlineLifeGui(gtk.Window):
             id_str = href[id_begin+1: id_end]
             return id_str
         
-    def startJsThread(self, url, referer):
+    def start_js_thread(self, url, referer):
         if self.jsThread == None or not self.jsThread.is_alive():
             # params to init: link and referer
             self.jsThread = JsThread(self, url, referer)
             self.jsThread.start()
     
-    def onResultActivated(self, iconview, path):
+    def on_result_activated(self, iconview, path):
         store = iconview.get_model()
         resultsIter = store.get_iter(path)
         self.savedItemImage = store.get_value(resultsIter, 0)
@@ -652,12 +647,12 @@ class OnlineLifeGui(gtk.Window):
         else:
             # This will get actors for last constant links item if actors button is pressed
             self.isActorsAvailable  = False
-            hrefId = self.getHrefId(self.actorsLink)
+            hrefId = self.get_href_id(self.actorsLink)
             url = "http://play.cidwo.com/js.php?id=" + hrefId
             referer = "http://play.cidwo.com/player.php?newsid=" + hrefId
-            self.startJsThread(url, referer)
+            self.start_js_thread(url, referer)
         
-    def showActorsSpinner(self):
+    def show_actors_spinner(self):
         self.btnOpen.set_sensitive(False)
         self.vbRight.show()
         self.spActors.show()
@@ -666,21 +661,21 @@ class OnlineLifeGui(gtk.Window):
         self.frActors.hide()
         self.hbActorsError.hide()
         
-    def showActorsData(self):
+    def show_actors_data(self):
         self.spActors.stop()
         self.spActors.hide()
         self.frInfo.show()
         self.frActors.show()
         self.hbActorsError.hide()
         
-    def showActorsError(self):
+    def show_actors_error(self):
         self.spActors.stop()
         self.spActors.hide()
         self.frInfo.hide()
         self.frActors.hide()
         self.hbActorsError.show()    
 
-    def showSaveOrDeleteButton(self):
+    def show_save_or_delete_button(self):
         if self.isLinkSaved(self.playlistsTitle):
             self.btnDelete.show()
             self.btnSave.hide()
@@ -688,22 +683,22 @@ class OnlineLifeGui(gtk.Window):
             self.btnSave.show()
             self.btnDelete.hide()
         
-    def onActorsPreExecute(self):
-        self.showActorsSpinner()
-        self.showSaveOrDeleteButton()
+    def on_actors_pre_execute(self):
+        self.show_actors_spinner()
+        self.show_save_or_delete_button()
         
-    def onActorsFirstItemReceived(self, info, name, href):
+    def on_actors_first_item_received(self, info, name, href):
         self.actorsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
         self.tvActors.set_model(self.actorsStore)
         self.lbInfo.set_text(info)
-        self.addToActorsModel(name, href)
+        self.add_to_actors_model(name, href)
         self.isActorsAvailable = True
-        self.showActorsData()
+        self.show_actors_data()
         
-    def addToActorsModel(self, name, href):
+    def add_to_actors_model(self, name, href):
         self.actorsStore.append([FILE_PIXBUF, name, href])
 
-    def tvActorsRowActivated(self, treeview, path, view_column):
+    def tv_actors_row_activated(self, treeview, path, view_column):
         model = treeview.get_model()
         actors_iter = model.get_iter(path)
         values = model.get(actors_iter, 1, 2)
@@ -713,11 +708,11 @@ class OnlineLifeGui(gtk.Window):
             self.resultsThread = ResultsThread(self, self.resultsLink, values[0])
             self.resultsThread.start()
             
-    def setActorsPlayerUrl(self, playerUrl):
+    def set_actors_player_url(self, playerUrl):
         self.playerUrl = playerUrl
         self.btnOpen.set_sensitive(self.playerUrl != "")
         
-    def btnOpenClicked(self, widget):
+    def btn_open_clicked(self, widget):
         if self.playerUrl.find("http") != -1:
             if self.playerThread == None or not self.playerThread.is_alive():
                 self.playerThread = PlayerThread(self)
@@ -733,18 +728,18 @@ class OnlineLifeGui(gtk.Window):
             dialog.run()
             dialog.destroy()
             
-    def btnSaveClicked(self, widget):
+    def btn_save_clicked(self, widget):
         self.saveLink(self.playlistsTitle, self.actorsLink)
-        self.showSaveOrDeleteButton()
+        self.show_save_or_delete_button()
         self.saveImage(self.playlistsTitle)
-        self.preserveSavedItemsPosition()
+        self.preserve_saved_items_position()
         self.listSavedFiles()
         
-    def btnDeleteClicked(self, widget):
+    def btn_delete_clicked(self, widget):
         self.removeLink(self.playlistsTitle)
-        self.showSaveOrDeleteButton()
+        self.show_save_or_delete_button()
         self.removeImage(self.playlistsTitle)
-        self.preserveSavedItemsPosition()
+        self.preserve_saved_items_position()
         self.listSavedFiles()
         
     def btnSavedItemsClicked(self, widget):
@@ -759,22 +754,22 @@ class OnlineLifeGui(gtk.Window):
         
     def btnUpClicked(self, widget):
         self.setResultsTitle()
-        self.showResultsData()
+        self.show_results_data()
         self.listSavedFiles()
         
     def btnPrevClicked(self, widget):
-        self.saveToNextHistory()
+        self.save_to_next_history()
         if(len(self.prevHistory) > 0):
             historyItem = self.prevHistory.pop()
-            self.restoreFromHistory(historyItem)
-        self.updatePrevNextButtons()
+            self.restore_from_history(historyItem)
+        self.update_prev_next_buttons()
         
     def btnNextClicked(self, widget):
-        self.saveToPrevHistory()
+        self.save_to_prev_history()
         if(len(self.nextHistory) > 0):
             historyItem = self.nextHistory.pop()
-            self.restoreFromHistory(historyItem)
-        self.updatePrevNextButtons()
+            self.restore_from_history(historyItem)
+        self.update_prev_next_buttons()
 
     def setResultsTitle(self):
         if self.resultsTitle == None:
@@ -814,7 +809,7 @@ class OnlineLifeGui(gtk.Window):
     
     def startActorsThread(self):
         if self.actorsThread == None or not self.actorsThread.is_alive():
-            self.onActorsPreExecute()
+            self.on_actors_pre_execute()
             self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
             self.actorsThread.start()   
             
@@ -831,7 +826,7 @@ class OnlineLifeGui(gtk.Window):
             self.resultsThread.cancel()
         if self.actorsThread != None and self.actorsThread.is_alive():
             self.actorsThread.cancel()
-        self.cancelImageThreads()
+        self.cancel_image_threads()
         gtk.main_quit()
         
     def tvCategoriesRowActivated(self, treeview, path, view_column):
@@ -853,7 +848,7 @@ class OnlineLifeGui(gtk.Window):
         self.btnSavedItems.set_sensitive(False)
         self.playlistsStore.clear()
         self.singlePlaylistStore.clear()
-        self.showCenterSpinner(False)
+        self.show_center_spinner(False)
         
     def setPlaylistsModel(self):
         self.tvPlaylists.set_model(self.playlistsStore)
@@ -953,7 +948,7 @@ class OnlineLifeGui(gtk.Window):
                 self.btnSavedItems.set_active(False)
                 
             if self.btnSavedItems.get_active(): # Show saved items
-                self.resultsPosition = self.getResultsPosition()
+                self.resultsPosition = self.get_results_position()
                 self.btnPrev.set_sensitive(False)
                 self.btnNext.set_sensitive(False)
                 self.btnRefresh.set_sensitive(False)
@@ -977,14 +972,14 @@ class OnlineLifeGui(gtk.Window):
                                                 None])
                         
                 if self.savedItemsPosition == None:
-                    self.scrollToTopOfList(savedItemsStore)
+                    self.scroll_to_top_of_list(savedItemsStore)
                 else:
                     self.ivResults.scroll_to_path(self.savedItemsPosition,
                                                   False, 0, 0)
             else: # Switch back to results
-                self.preserveSavedItemsPosition()
+                self.preserve_saved_items_position()
                 
-                self.updatePrevNextButtons()
+                self.update_prev_next_buttons()
                 # FIRST set model
                 self.ivResults.set_model(self.resultsStore)
                 # THEN restore position
@@ -994,7 +989,7 @@ class OnlineLifeGui(gtk.Window):
                     self.btnRefresh.set_sensitive(True)
                 self.setResultsTitle()
             if not self.swResults.get_visible():
-                self.showResultsData()
+                self.show_results_data()
         except OSError as ex:
             self.btnSavedItems.set_sensitive(False)
             self.btnSavedItems.set_active(False)
@@ -1024,7 +1019,7 @@ class CategoriesThread(threading.Thread):
         self.isCancelled = True
         
     def run(self):
-        gobject.idle_add(self.gui.onCategoriesPreExecute)
+        gobject.idle_add(self.gui.on_categories_pre_execute)
         parser = CategoriesHTMLParser(self) 
         try:
             begin_found = False
@@ -1035,7 +1030,7 @@ class CategoriesThread(threading.Thread):
             
             for line in response:
                 if self.isCancelled:
-                    gobject.idle_add(self.gui.showCategoriesData)
+                    gobject.idle_add(self.gui.show_categories_data)
                     parser.close()
                     response.close()
                     break
@@ -1044,7 +1039,7 @@ class CategoriesThread(threading.Thread):
                     
         except Exception as ex:
             print ex
-            gobject.idle_add(self.gui.onCategoriesError)
+            gobject.idle_add(self.gui.on_categories_error)
             
 class CategoriesHTMLParser(HTMLParser):
     def __init__(self, task):
@@ -1061,7 +1056,7 @@ class CategoriesHTMLParser(HTMLParser):
             attr = attrs[0]
             if attr[0] == "class" and attr[1] == "nav":
                 self.isNav = True
-                gobject.idle_add(self.task.gui.addMainToRoot)
+                gobject.idle_add(self.task.gui.add_main_to_root)
         
         if self.isNav:
             if tag == "li":
@@ -1086,7 +1081,7 @@ class CategoriesHTMLParser(HTMLParser):
         if self.isNav:
             if tag == "div":
                 self.isNav = False
-                gobject.idle_add(self.task.gui.onCategoriesPostExecute)
+                gobject.idle_add(self.task.gui.on_categories_post_execute)
                 self.task.cancel()
             elif tag == "li":
                 if self.isDropChild:
@@ -1100,11 +1095,11 @@ class CategoriesHTMLParser(HTMLParser):
         if self.isNav:
             if data.strip() != "":
                 if self.isDrop and not self.isDropChild:
-                    gobject.idle_add(self.task.gui.addDropToRoot, data, self.href)
+                    gobject.idle_add(self.task.gui.add_drop_to_root, data, self.href)
                 elif self.isDropChild:
-                    gobject.idle_add(self.task.gui.addToDrop, data, self.href)
+                    gobject.idle_add(self.task.gui.add_to_drop, data, self.href)
                 elif self.isNoDrop and data != "ТВ":
-                    gobject.idle_add(self.task.gui.addToMain, data, self.href)
+                    gobject.idle_add(self.task.gui.add_to_main, data, self.href)
                     
 class ResultsThread(threading.Thread):
     def __init__(self, gui, link, title = ""):
@@ -1115,7 +1110,7 @@ class ResultsThread(threading.Thread):
         threading.Thread.__init__(self)
     
     def run(self):
-        gobject.idle_add(self.gui.onResultsPreExecute, self.title)  
+        gobject.idle_add(self.gui.on_results_pre_execute, self.title)  
         parser = ResultsHTMLParser(self)
         try:
             response = urllib2.urlopen(self.link)
@@ -1123,13 +1118,13 @@ class ResultsThread(threading.Thread):
                 if self.isCancelled:
                     parser.close()
                     response.close()
-                    gobject.idle_add(self.gui.showResultsData)
+                    gobject.idle_add(self.gui.show_results_data)
                     break
                 else:
                     parser.feed(line.decode('cp1251'))      
         except Exception as ex:
             print(ex)
-            gobject.idle_add(self.gui.showCenterError, self.title)
+            gobject.idle_add(self.gui.show_center_error, self.title)
             
     def cancel(self):
         self.isCancelled = True
@@ -1182,14 +1177,14 @@ class ResultsHTMLParser(HTMLParser):
         if tag == "div":
             if self.isNavDiv:
                 self.isNavDiv = False
-                gobject.idle_add(self.task.gui.setResultsNextLink, 
+                gobject.idle_add(self.task.gui.set_results_next_link, 
                                  self.nextLink)
                 self.task.cancel()
         elif tag == "a":
             if self.isPosterDiv:
                 self.isPosterAnchor = False
                 self.isPosterDiv = False
-                gobject.idle_add(self.task.gui.addToResultsModel, 
+                gobject.idle_add(self.task.gui.add_to_results_model, 
                                  self.data, 
                                  self.href, 
                                  self.image)
@@ -1198,20 +1193,20 @@ class ResultsHTMLParser(HTMLParser):
                 self.isNavAnchor = False
         elif tag == "body":
             self.task.cancel()
-            gobject.idle_add(self.task.gui.setResultsNextLink, "")
+            gobject.idle_add(self.task.gui.set_results_next_link, "")
         
     def handle_data(self, data):
         if data.strip() != "":
             if self.isPosterAnchor:
                 if(self.count == 0):
-                    gobject.idle_add(self.task.gui.onFirstItemReceived, 
+                    gobject.idle_add(self.task.gui.on_first_item_received, 
                                      self.task.title)
                 self.data += data
                 
                 # self.title != "" on new results list, not paging
                 # scrolling to top after first item added to model  
                 if(self.count == 1 and self.task.title != ""):
-                    gobject.idle_add(self.task.gui.scrollToTopOfList,
+                    gobject.idle_add(self.task.gui.scroll_to_top_of_list,
                                      self.task.gui.resultsStore)
                 self.count += 1
             elif self.isNavAnchor:
@@ -1284,7 +1279,7 @@ class ActorsThread(threading.Thread):
                     parser.close()
                     break
         except Exception as ex:
-            self.gui.showActorsError()
+            self.gui.show_actors_error()
             print ex
             
 class ActorsHTMLParser(HTMLParser):
@@ -1305,7 +1300,7 @@ class ActorsHTMLParser(HTMLParser):
         elif tag == 'iframe':
             for attr in attrs:
                 if attr[0] == "src":
-                    gobject.idle_add(self.task.gui.setActorsPlayerUrl,
+                    gobject.idle_add(self.task.gui.set_actors_player_url,
                                      attr[1])
                     self.task.cancel()
                     break
@@ -1328,17 +1323,17 @@ class ActorsHTMLParser(HTMLParser):
                     name = utf_data + u" (режиссер)"
                     if self.count == 0:
                         gobject.idle_add(
-                            self.task.gui.onActorsFirstItemReceived,
+                            self.task.gui.on_actors_first_item_received,
                             self.getInfo(),
                             name,
                             self.href)
                     else:
-                        gobject.idle_add(self.task.gui.addToActorsModel, 
+                        gobject.idle_add(self.task.gui.add_to_actors_model, 
                                      name, 
                                      self.href)
                     self.count += 1
                 elif self.isActors:
-                    gobject.idle_add(self.task.gui.addToActorsModel, 
+                    gobject.idle_add(self.task.gui.add_to_actors_model, 
                                      utf_data, 
                                      self.href)
                     self.count += 1
@@ -1372,7 +1367,7 @@ class PlayerThread(threading.Thread):
     def cancel(self):
         self.isCancelled = True
         
-    def startJsThread(self, jsLink):
+    def start_js_thread(self, jsLink):
         if self.gui.jsThread == None or not self.gui.jsThread.is_alive():
             # params to init: link and referer
             self.gui.jsThread = JsThread(self.gui, jsLink, self.gui.playerUrl)
@@ -1403,7 +1398,7 @@ class PlayerHTMLParser(HTMLParser):
             for attr in attrs:
                 if attr[0] == "src" and attr[1].find("js.php") != -1:
                     self.task.isCancelled = True
-                    gobject.idle_add(self.task.startJsThread, "http:" + attr[1])
+                    gobject.idle_add(self.task.start_js_thread, "http:" + attr[1])
                     break
 
 def getLinkSize(link):
@@ -1511,14 +1506,14 @@ class JsThread(threading.Thread):
                 # In case of single playlist
                 if(comment == ""):
                     self.gui.setSinglePlaylistModel()
-                    self.gui.showPlaylsitsData()
+                    self.gui.show_playlists_data()
                     return
             
             playlist_begin = json.find(begin, playlist_end+2)
             playlist_end = json.find(end, playlist_begin+1)
         #In case of multiple playlists
         self.gui.setPlaylistsModel()
-        self.gui.showPlaylsitsData()
+        self.gui.show_playlists_data()
             
     def getPlaylist(self, link):
         gobject.idle_add(self.gui.onPlaylistsPreExecute)
@@ -1528,7 +1523,7 @@ class JsThread(threading.Thread):
             gobject.idle_add(self.playlistsParser, json)
         except Exception as ex:
             print ex
-            gobject.idle_add(self.gui.showCenterError, "playlists_error")
+            gobject.idle_add(self.gui.show_center_error, "playlists_error")
                 
     def run(self):
         headers = {'Referer': self.referer}
