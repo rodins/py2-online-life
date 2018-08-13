@@ -90,71 +90,71 @@ class OnlineLifeGui(gtk.Window):
         toolbar = gtk.Toolbar()
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         
-        btnCategories = gtk.ToggleToolButton(gtk.STOCK_DIRECTORY)
-        btnCategories.set_tooltip_text("Show/hide categories")
-        btnCategories.connect("clicked", self.btn_categories_clicked)
-        toolbar.insert(btnCategories, -1)
+        btn_categories = gtk.ToggleToolButton(gtk.STOCK_DIRECTORY)
+        btn_categories.set_tooltip_text("Show/hide categories")
+        btn_categories.connect("clicked", self.btn_categories_clicked)
+        toolbar.insert(btn_categories, -1)
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        bookmarkIcon = gtk.Image()
-        bookmarkIcon.set_from_file(os.path.join(sys.path[0], 
+        bookmark_icon = gtk.Image()
+        bookmark_icon.set_from_file(os.path.join(sys.path[0], 
                                                 "images", 
                                                 "bookmark_24.png"))
         
-        self.btnSavedItems = gtk.ToggleToolButton()
-        self.btnSavedItems.set_icon_widget(bookmarkIcon)
-        self.btnSavedItems.set_tooltip_text("Show/hide bookmarks")
-        self.btnSavedItems.connect("clicked", self.btn_saved_items_clicked)
-        toolbar.insert(self.btnSavedItems, -1)
+        self.btn_saved_items = gtk.ToggleToolButton()
+        self.btn_saved_items.set_icon_widget(bookmark_icon)
+        self.btn_saved_items.set_tooltip_text("Show/hide bookmarks")
+        self.btn_saved_items.connect("clicked", self.btn_saved_items_clicked)
+        toolbar.insert(self.btn_saved_items, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        self.btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
-        self.btnRefresh.set_tooltip_text("Update results")
-        self.btnRefresh.connect("clicked", self.btn_refresh_clicked)
-        self.btnRefresh.set_sensitive(False)
-        toolbar.insert(self.btnRefresh, -1)
+        self.btn_refresh = gtk.ToolButton(gtk.STOCK_REFRESH)
+        self.btn_refresh.set_tooltip_text("Update results")
+        self.btn_refresh.connect("clicked", self.btn_refresh_clicked)
+        self.btn_refresh.set_sensitive(False)
+        toolbar.insert(self.btn_refresh, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        self.btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
-        self.btnUp.set_tooltip_text("Move up")
-        self.btnUp.connect("clicked", self.btn_up_clicked)
-        self.btnUp.set_sensitive(False)
-        toolbar.insert(self.btnUp, -1)
+        self.btn_up = gtk.ToolButton(gtk.STOCK_GO_UP)
+        self.btn_up.set_tooltip_text("Move up")
+        self.btn_up.connect("clicked", self.btn_up_clicked)
+        self.btn_up.set_sensitive(False)
+        toolbar.insert(self.btn_up, -1)
         
-        self.btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
-        self.btnPrev.connect("clicked", self.btn_prev_clicked)
-        self.btnPrev.set_sensitive(False)
-        toolbar.insert(self.btnPrev, -1)
+        self.btn_prev = gtk.ToolButton(gtk.STOCK_GO_BACK)
+        self.btn_prev.connect("clicked", self.btn_prev_clicked)
+        self.btn_prev.set_sensitive(False)
+        toolbar.insert(self.btn_prev, -1)
         
-        self.btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
-        self.btnNext.connect("clicked", self.btn_next_clicked)
-        self.btnNext.set_sensitive(False)
-        toolbar.insert(self.btnNext, -1)
+        self.btn_next = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
+        self.btn_next.connect("clicked", self.btn_next_clicked)
+        self.btn_next.set_sensitive(False)
+        toolbar.insert(self.btn_next, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        entryItem = gtk.ToolItem()
+        entry_item = gtk.ToolItem()
         entry = gtk.Entry()
         entry.set_tooltip_text("Search online-life")
         entry.connect("activate", self.entry_activated)
-        entryItem.add(entry)
-        toolbar.insert(entryItem, -1)
+        entry_item.add(entry)
+        toolbar.insert(entry_item, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        self.btnActors = gtk.ToggleToolButton(gtk.STOCK_INFO)
-        self.btnActors.set_tooltip_text("Show/hide info")
-        self.btnActors.connect("clicked", self.btn_actors_clicked)
-        toolbar.insert(self.btnActors, -1)
+        self.btn_actors = gtk.ToggleToolButton(gtk.STOCK_INFO)
+        self.btn_actors.set_tooltip_text("Show/hide info")
+        self.btn_actors.connect("clicked", self.btn_actors_clicked)
+        toolbar.insert(self.btn_actors, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
-        btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
-        btnExit.set_tooltip_text("Quit program")
-        btnExit.connect("clicked", self.btn_quit_clicked)
-        toolbar.insert(btnExit, -1)
+        btn_exit = gtk.ToolButton(gtk.STOCK_QUIT)
+        btn_exit.set_tooltip_text("Quit program")
+        btn_exit.connect("clicked", self.btn_quit_clicked)
+        toolbar.insert(btn_exit, -1)
         
         vbox.pack_start(toolbar, False, False, 1)
         toolbar.show_all()
@@ -163,40 +163,33 @@ class OnlineLifeGui(gtk.Window):
         
         SIDE_SIZE = 220
         SPINNER_SIZE = 32
-        self.vbLeft = gtk.VBox(False, 1)
-        self.vbCenter = gtk.VBox(False, 1)
-        self.vbRight = gtk.VBox(False, 1)
-        self.vbLeft.set_size_request(SIDE_SIZE, -1)
-        self.vbRight.set_size_request(SIDE_SIZE, -1)
+        self.vb_left = gtk.VBox(False, 1)
+        self.vb_center = gtk.VBox(False, 1)
+        self.vb_right = gtk.VBox(False, 1)
+        self.vb_left.set_size_request(SIDE_SIZE, -1)
+        self.vb_right.set_size_request(SIDE_SIZE, -1)
         
-        # Add widgets to vbLeft
-        self.tvCategories = self.create_tree_view()
-        self.tvCategories.connect("row-activated", self.tv_categories_row_activated)
-        self.tvCategories.show()
-        self.swCategories = self.create_scrolled_window()
-        self.swCategories.add(self.tvCategories)
+        # Add widgets to vb_left
+        self.tv_categories = self.create_tree_view()
+        self.tv_categories.connect("row-activated", self.tv_categories_row_activated)
+        self.tv_categories.show()
+        self.sw_categories = self.create_scrolled_window()
+        self.sw_categories.add(self.tv_categories)
         
-        self.spCategories = gtk.Spinner()
-        self.spCategories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
+        self.sp_categories = gtk.Spinner()
+        self.sp_categories.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
         
-        btnCategoriesError = gtk.Button("Repeat")
-        btnCategoriesError.connect("clicked", self.btn_categories_error_clicked)
-        btnCategoriesError.show()
-        self.hbCategoriesError = gtk.HBox(False, 1)
-        self.hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
+        btn_categoriesError = gtk.Button("Repeat")
+        btn_categoriesError.connect("clicked", self.btn_categories_error_clicked)
+        btn_categoriesError.show()
+        self.hb_categories_error = gtk.HBox(False, 1)
+        self.hb_categories_error.pack_start(btn_categoriesError, True, False, 10)
         
-        tvSavedItems = self.create_tree_view()
-        swSavedItems = self.create_scrolled_window()
-        swSavedItems.add(tvSavedItems)
-        frSavedItems = gtk.Frame("Saved items")
-        frSavedItems.add(swSavedItems)
+        self.vb_left.pack_start(self.sw_categories, True, True, 1)
+        self.vb_left.pack_start(self.sp_categories, True, False, 1)
+        self.vb_left.pack_start(self.hb_categories_error, True, False, 1)
         
-        self.vbLeft.pack_start(self.swCategories, True, True, 1)
-        self.vbLeft.pack_start(self.spCategories, True, False, 1)
-        self.vbLeft.pack_start(self.hbCategoriesError, True, False, 1)
-        self.vbLeft.pack_start(frSavedItems, True, True, 1)
-        
-        # Add widgets to vbCenter
+        # Add widgets to vb_center
         self.tvPlaylists = self.create_tree_view()
         self.tvPlaylists.connect("row-activated", self.tv_playlists_row_activated)
         # Stores arg: title, flv, mpv
@@ -227,12 +220,12 @@ class OnlineLifeGui(gtk.Window):
         self.hbCenterError = gtk.HBox(False, 1)
         self.hbCenterError.pack_start(btnCenterError, True, False, 10)
         
-        self.vbCenter.pack_start(self.swPlaylists, True, True, 1)
-        self.vbCenter.pack_start(self.swResults, True, True, 1)
-        self.vbCenter.pack_start(self.spCenter, True, False, 1)
-        self.vbCenter.pack_start(self.hbCenterError, True, False, 1)
+        self.vb_center.pack_start(self.swPlaylists, True, True, 1)
+        self.vb_center.pack_start(self.swResults, True, True, 1)
+        self.vb_center.pack_start(self.spCenter, True, False, 1)
+        self.vb_center.pack_start(self.hbCenterError, True, False, 1)
         
-        # Add widgets to vbRight
+        # Add widgets to vb_right
         self.lbInfo = gtk.Label("")
         self.lbInfo.set_size_request(SIDE_SIZE, -1)
         self.lbInfo.set_line_wrap(True)
@@ -251,11 +244,11 @@ class OnlineLifeGui(gtk.Window):
         self.spActors = gtk.Spinner()
         self.spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
         
-        btnActorsError = gtk.Button("Repeat")
-        btnActorsError.connect("clicked", self.btn_actors_error_clicked)
-        btnActorsError.show()
+        btn_actorsError = gtk.Button("Repeat")
+        btn_actorsError.connect("clicked", self.btn_actors_error_clicked)
+        btn_actorsError.show()
         self.hbActorsError = gtk.HBox(False, 1)
-        self.hbActorsError.pack_start(btnActorsError, True, False, 10)
+        self.hbActorsError.pack_start(btn_actorsError, True, False, 10)
         
         spLinks = gtk.Spinner()
         spLinks.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -303,23 +296,23 @@ class OnlineLifeGui(gtk.Window):
         frBackActors = gtk.Frame("Actors history")
         frBackActors.add(swBackActors)
         
-        self.vbRight.pack_start(self.frInfo, False, False, 1)
-        self.vbRight.pack_start(self.frActors, True, True, 1)
-        self.vbRight.pack_start(self.spActors, True, False, 1)
-        self.vbRight.pack_start(self.hbActorsError, True, False, 1)
-        self.vbRight.pack_start(frActions, False, False, 1)
-        self.vbRight.pack_start(frBackActors, True, True, 1)
+        self.vb_right.pack_start(self.frInfo, False, False, 1)
+        self.vb_right.pack_start(self.frActors, True, True, 1)
+        self.vb_right.pack_start(self.spActors, True, False, 1)
+        self.vb_right.pack_start(self.hbActorsError, True, False, 1)
+        self.vb_right.pack_start(frActions, False, False, 1)
+        self.vb_right.pack_start(frBackActors, True, True, 1)
         
-        hbox.pack_start(self.vbLeft, False, False, 1)
-        hbox.pack_start(self.vbCenter, True, True, 1)
-        hbox.pack_start(self.vbRight, False, False, 1)
+        hbox.pack_start(self.vb_left, False, False, 1)
+        hbox.pack_start(self.vb_center, True, True, 1)
+        hbox.pack_start(self.vb_right, False, False, 1)
         
         vbox.pack_start(hbox, True, True, 1)
         
         self.add(vbox)
         vbox.show()
         hbox.show()
-        self.vbCenter.show()
+        self.vb_center.show()
         self.show()
         
         self.categoriesThread = None
@@ -349,22 +342,22 @@ class OnlineLifeGui(gtk.Window):
         self.list_saved_files(True) # Show save results on start
         
     def show_categories_spinner(self):
-        self.spCategories.show()
-        self.spCategories.start()
-        self.swCategories.hide()
-        self.hbCategoriesError.hide()
+        self.sp_categories.show()
+        self.sp_categories.start()
+        self.sw_categories.hide()
+        self.hb_categories_error.hide()
     
     def show_categories_data(self):
-        self.spCategories.hide()
-        self.spCategories.stop()
-        self.swCategories.show()
-        self.hbCategoriesError.hide()
+        self.sp_categories.hide()
+        self.sp_categories.stop()
+        self.sw_categories.show()
+        self.hb_categories_error.hide()
     
     def show_categories_error(self):
-        self.spCategories.hide()
-        self.spCategories.stop()
-        self.swCategories.hide()
-        self.hbCategoriesError.show()
+        self.sp_categories.hide()
+        self.sp_categories.stop()
+        self.sw_categories.hide()
+        self.hb_categories_error.show()
         
     def on_categories_pre_execute(self):
         self.treestore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str)
@@ -384,18 +377,18 @@ class OnlineLifeGui(gtk.Window):
         
     #TODO: use on first item reseived not on post execute   
     def on_categories_post_execute(self):
-        self.tvCategories.set_model(self.treestore)
+        self.tv_categories.set_model(self.treestore)
         self.show_categories_data()
         
     def on_categories_error(self):
         self.show_categories_error()
         
     def btn_categories_clicked(self, widget):
-        if self.vbLeft.get_visible():
-            self.vbLeft.hide()
+        if self.vb_left.get_visible():
+            self.vb_left.hide()
         else:
-            self.vbLeft.show()
-            if self.tvCategories.get_model() != None:
+            self.vb_left.show()
+            if self.tv_categories.get_model() != None:
                 self.show_categories_data()
             elif self.categoriesThread == None or not self.categoriesThread.is_alive():
                 self.categoriesThread = CategoriesThread(self)
@@ -407,13 +400,13 @@ class OnlineLifeGui(gtk.Window):
             self.categoriesThread.start()
     
     def show_center_spinner(self, isPaging):
-        self.btnRefresh.set_sensitive(False)
-        self.btnUp.set_sensitive(False)
+        self.btn_refresh.set_sensitive(False)
+        self.btn_up.set_sensitive(False)
         self.spCenter.show()
         self.spCenter.start()
         self.swPlaylists.hide()
         self.swResults.set_visible(isPaging)
-        self.vbCenter.set_child_packing(self.spCenter, 
+        self.vb_center.set_child_packing(self.spCenter, 
                                         not isPaging, 
                                         False, 
                                         1, 
@@ -421,11 +414,11 @@ class OnlineLifeGui(gtk.Window):
         self.hbCenterError.hide()
         
     def show_results_data(self):
-        if self.btnSavedItems.get_active():
-            self.btnRefresh.set_sensitive(False)
+        if self.btn_saved_items.get_active():
+            self.btn_refresh.set_sensitive(False)
         else:
-            self.btnRefresh.set_sensitive(True)
-        self.btnUp.set_sensitive(False)
+            self.btn_refresh.set_sensitive(True)
+        self.btn_up.set_sensitive(False)
         self.spCenter.hide()
         self.spCenter.stop()
         self.swPlaylists.hide()
@@ -434,7 +427,7 @@ class OnlineLifeGui(gtk.Window):
         
     def show_playlists_data(self):
         self.set_title(PROG_NAME + " - " + self.playlistsTitle)
-        self.btnUp.set_sensitive(True)
+        self.btn_up.set_sensitive(True)
         self.spCenter.hide()
         self.spCenter.stop()
         self.swPlaylists.show()
@@ -454,7 +447,7 @@ class OnlineLifeGui(gtk.Window):
         self.spCenter.stop()
         self.swPlaylists.hide()
         self.swResults.set_visible(isPaging)
-        self.vbCenter.set_child_packing(self.hbCenterError, not isPaging, False, 1, gtk.PACK_START)
+        self.vb_center.set_child_packing(self.hbCenterError, not isPaging, False, 1, gtk.PACK_START)
         self.hbCenterError.show()
 
     # TODO: implement playlists error    
@@ -472,8 +465,8 @@ class OnlineLifeGui(gtk.Window):
         if title != "":
             self.set_title(PROG_NAME + " - Loading...")
             self.cancel_image_threads()
-            if self.btnSavedItems.get_active():
-                self.btnSavedItems.set_active(False)
+            if self.btn_saved_items.get_active():
+                self.btn_saved_items.set_active(False)
                 self.list_saved_files()
         self.show_center_spinner(title == "")
         
@@ -532,17 +525,17 @@ class OnlineLifeGui(gtk.Window):
         # Set top item titles as tooltips for buttons
         if(prevSize > 0):
             topItem = self.prevHistory[prevSize-1]
-            self.btnPrev.set_tooltip_text(topItem.title)
+            self.btn_prev.set_tooltip_text(topItem.title)
         else:
-            self.btnPrev.set_tooltip_text("No previous history items")
+            self.btn_prev.set_tooltip_text("No previous history items")
         if(nextSize > 0):
             topItem = self.nextHistory[nextSize-1]
-            self.btnNext.set_tooltip_text(topItem.title)
+            self.btn_next.set_tooltip_text(topItem.title)
         else:
-            self.btnNext.set_tooltip_text("No next history items")
+            self.btn_next.set_tooltip_text("No next history items")
         # Emable buttons if lists are not empty, disable otherwise    
-        self.btnPrev.set_sensitive(prevSize > 0)
-        self.btnNext.set_sensitive(nextSize > 0)
+        self.btn_prev.set_sensitive(prevSize > 0)
+        self.btn_next.set_sensitive(nextSize > 0)
         
     def create_and_set_results_model(self):
         self.resultsStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
@@ -582,7 +575,7 @@ class OnlineLifeGui(gtk.Window):
             self.savedItemsPosition = None
     
     def on_results_draw(self, widget, event):
-        if self.resultsStore == None or self.btnSavedItems.get_active():
+        if self.resultsStore == None or self.btn_saved_items.get_active():
             return
         visible_range = self.ivResults.get_visible_range()
         if visible_range != None:
@@ -608,7 +601,7 @@ class OnlineLifeGui(gtk.Window):
         self.imageThreads = []
         
     def on_results_scroll_to_bottom(self, adj):
-        if self.resultsStore == None or self.btnSavedItems.get_active():
+        if self.resultsStore == None or self.btn_saved_items.get_active():
             return
         value = adj.get_value()
         upper = adj.get_upper()
@@ -644,7 +637,7 @@ class OnlineLifeGui(gtk.Window):
         self.savedItemImage = store.get_value(resultsIter, 0)
         self.playlistsTitle = store.get_value(resultsIter, 1)
         self.actorsLink = store.get_value(resultsIter, 2)
-        if self.btnActors.get_active():
+        if self.btn_actors.get_active():
             self.start_actors_thread()
         else:
             # This will get actors for last constant links item if actors button is pressed
@@ -656,7 +649,7 @@ class OnlineLifeGui(gtk.Window):
         
     def show_actors_spinner(self):
         self.btnOpen.set_sensitive(False)
-        self.vbRight.show()
+        self.vb_right.show()
         self.spActors.show()
         self.spActors.start()
         self.frInfo.hide()
@@ -801,13 +794,13 @@ class OnlineLifeGui(gtk.Window):
                 self.resultsThread.start()
         
     def btn_actors_clicked(self, widget):
-        if self.btnActors.get_active():
+        if self.btn_actors.get_active():
             if self.isActorsAvailable:
-                self.vbRight.show()
+                self.vb_right.show()
             elif self.actorsLink != "":
                 self.start_actors_thread()
         else:
-            self.vbRight.hide()
+            self.vb_right.hide()
     
     def start_actors_thread(self):
         if self.actorsThread == None or not self.actorsThread.is_alive():
@@ -847,7 +840,7 @@ class OnlineLifeGui(gtk.Window):
         self.resultsThread.start()
         
     def on_playlists_pre_execute(self):
-        self.btnSavedItems.set_sensitive(False)
+        self.btn_saved_items.set_sensitive(False)
         self.playlistsStore.clear()
         self.singlePlaylistStore.clear()
         self.show_center_spinner(False)
@@ -943,17 +936,17 @@ class OnlineLifeGui(gtk.Window):
             saves = os.listdir(APP_SAVES_DIR)
             if len(saves) > 0:
                 if showOnStart:
-                    self.btnSavedItems.set_active(True)
-                self.btnSavedItems.set_sensitive(True)
+                    self.btn_saved_items.set_active(True)
+                self.btn_saved_items.set_sensitive(True)
             else:
-                self.btnSavedItems.set_sensitive(False)
-                self.btnSavedItems.set_active(False)
+                self.btn_saved_items.set_sensitive(False)
+                self.btn_saved_items.set_active(False)
                 
-            if self.btnSavedItems.get_active(): # Show saved items
+            if self.btn_saved_items.get_active(): # Show saved items
                 self.resultsPosition = self.get_results_position()
-                self.btnPrev.set_sensitive(False)
-                self.btnNext.set_sensitive(False)
-                self.btnRefresh.set_sensitive(False)
+                self.btn_prev.set_sensitive(False)
+                self.btn_next.set_sensitive(False)
+                self.btn_refresh.set_sensitive(False)
                 self.set_title(PROG_NAME + " - " + "Saved items")
                 savedItemsStore = gtk.ListStore(gtk.gdk.Pixbuf,
                                                 str,
@@ -988,13 +981,13 @@ class OnlineLifeGui(gtk.Window):
                 if self.resultsPosition != None and self.resultsStore != None:
                     self.ivResults.scroll_to_path(self.resultsPosition,
                                                   False, 0, 0)
-                    self.btnRefresh.set_sensitive(True)
+                    self.btn_refresh.set_sensitive(True)
                 self.set_results_title()
             if not self.swResults.get_visible():
                 self.show_results_data()
         except OSError as ex:
-            self.btnSavedItems.set_sensitive(False)
-            self.btnSavedItems.set_active(False)
+            self.btn_saved_items.set_sensitive(False)
+            self.btn_saved_items.set_active(False)
             print ex
         
 class CategoriesThread(threading.Thread):
@@ -1561,7 +1554,7 @@ class PlayItemDialog:
                                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
 
         # Add info button to dialog
-        if not self.gui.btnActors.get_active():
+        if not self.gui.btn_actors.get_active():
             dialog.add_button(gtk.STOCK_INFO, self.RESPONSE_INFO)
         
         # If we have one link use dialog with one play button and cancel
@@ -1590,7 +1583,7 @@ class PlayItemDialog:
         elif response == self.RESPONSE_MP4:
             Popen(["mpv", self.play_item.download])
         elif response == self.RESPONSE_INFO:
-            self.gui.btnActors.set_active(True)
+            self.gui.btn_actors.set_active(True)
             self.gui.start_actors_thread()
         dialog.destroy()
 
