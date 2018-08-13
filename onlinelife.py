@@ -1213,17 +1213,17 @@ class ImageThread(threading.Thread):
         self.link = link
         self.row = row
         self.pixbufLoader = gtk.gdk.PixbufLoader()
-        self.pixbufLoader.connect("area-prepared", self.pixbufLoaderPrepared)
+        self.pixbufLoader.connect("area-prepared", self.pixbuf_loader_prepared)
         self.isCancelled = False
         threading.Thread.__init__(self)
         
-    def pixbufLoaderPrepared(self, pixbufloader):
+    def pixbuf_loader_prepared(self, pixbufloader):
         self.row[0] = pixbufloader.get_pixbuf()
         
-    def writeToLoader(self, buf):
+    def write_to_loader(self, buf):
         self.pixbufLoader.write(buf)
         
-    def onPostExecute(self):
+    def on_post_execute(self):
         if self.pixbufLoader.close():
             pixbuf = self.pixbufLoader.get_pixbuf()
             self.imagesCache[self.link] = pixbuf
@@ -1240,10 +1240,10 @@ class ImageThread(threading.Thread):
             for buf in response:
                 if self.isCancelled:
                     break 
-                gobject.idle_add(self.writeToLoader, buf)
+                gobject.idle_add(self.write_to_loader, buf)
         except Exception as ex:
             print ex
-        gobject.idle_add(self.onPostExecute)
+        gobject.idle_add(self.on_post_execute)
         
 class ActorsThread(threading.Thread):
     def __init__(self, gui, link, title):
@@ -1300,7 +1300,7 @@ class ActorsHTMLParser(HTMLParser):
             elif self.isActors:
                 self.isActors = False
                     
-    def getInfo(self):
+    def get_info(self):
         return self.task.title + " - " + self.year + " - " + self.country
         
     def handle_data(self, utf_data):
@@ -1312,7 +1312,7 @@ class ActorsHTMLParser(HTMLParser):
                     if self.count == 0:
                         gobject.idle_add(
                             self.task.gui.on_actors_first_item_received,
-                            self.getInfo(),
+                            self.get_info(),
                             name,
                             self.href)
                     else:
@@ -1335,7 +1335,7 @@ class ActorsHTMLParser(HTMLParser):
                 elif utf_data.find(u"В ролях:") != -1:
                     self.isActors = True
                     
-def showErrorDialog(window):
+def show_error_dialog(window):
     message = "Network problem"
     dialog = gtk.MessageDialog(window, 
                                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, 
@@ -1374,7 +1374,7 @@ class PlayerThread(threading.Thread):
                 
         except Exception as ex:
             print ex
-            gobject.idle_add(showErrorDialog, self.gui)
+            gobject.idle_add(show_error_dialog, self.gui)
                 
 class PlayerHTMLParser(HTMLParser):
     def __init__(self, task):
@@ -1536,7 +1536,7 @@ class JsThread(threading.Thread):
             
         except Exception as ex:
             print ex
-            gobject.idle_add(showErrorDialog, self.gui)
+            gobject.idle_add(show_error_dialog, self.gui)
             
 class PlayItemDialog:
     def __init__(self, gui, play_item, flv_size, mp4_size):
@@ -1550,9 +1550,9 @@ class PlayItemDialog:
         self.flv_title = "FLV" + flv_size
         self.mp4_title = "MP4" + mp4_size
         self.play_title = "Play" + mp4_size
-        self.createDialog()
+        self.create_dialog()
         
-    def createDialog(self):
+    def create_dialog(self):
         label_width = 290
         label = gtk.Label(self.play_item.comment.strip())
 
