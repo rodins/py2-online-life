@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+# TODO: nothing found for results and actors
+
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -71,7 +73,7 @@ class OnlineLifeGui(gtk.Window):
     def __init__(self):
         super(OnlineLifeGui, self).__init__()
         
-        self.connect("destroy", self.onDestroy)
+        self.connect("destroy", self.on_destroy)
         self.set_border_width(5)
         self.set_size_request(700, 400)
         try:
@@ -102,14 +104,14 @@ class OnlineLifeGui(gtk.Window):
         self.btnSavedItems = gtk.ToggleToolButton()
         self.btnSavedItems.set_icon_widget(bookmarkIcon)
         self.btnSavedItems.set_tooltip_text("Show/hide bookmarks")
-        self.btnSavedItems.connect("clicked", self.btnSavedItemsClicked)
+        self.btnSavedItems.connect("clicked", self.btn_saved_items_clicked)
         toolbar.insert(self.btnSavedItems, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         self.btnRefresh = gtk.ToolButton(gtk.STOCK_REFRESH)
         self.btnRefresh.set_tooltip_text("Update results")
-        self.btnRefresh.connect("clicked", self.btnRefreshClicked)
+        self.btnRefresh.connect("clicked", self.btn_refresh_clicked)
         self.btnRefresh.set_sensitive(False)
         toolbar.insert(self.btnRefresh, -1)
         
@@ -117,17 +119,17 @@ class OnlineLifeGui(gtk.Window):
         
         self.btnUp = gtk.ToolButton(gtk.STOCK_GO_UP)
         self.btnUp.set_tooltip_text("Move up")
-        self.btnUp.connect("clicked", self.btnUpClicked)
+        self.btnUp.connect("clicked", self.btn_up_clicked)
         self.btnUp.set_sensitive(False)
         toolbar.insert(self.btnUp, -1)
         
         self.btnPrev = gtk.ToolButton(gtk.STOCK_GO_BACK)
-        self.btnPrev.connect("clicked", self.btnPrevClicked)
+        self.btnPrev.connect("clicked", self.btn_prev_clicked)
         self.btnPrev.set_sensitive(False)
         toolbar.insert(self.btnPrev, -1)
         
         self.btnNext = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
-        self.btnNext.connect("clicked", self.btnNextClicked)
+        self.btnNext.connect("clicked", self.btn_next_clicked)
         self.btnNext.set_sensitive(False)
         toolbar.insert(self.btnNext, -1)
         
@@ -136,7 +138,7 @@ class OnlineLifeGui(gtk.Window):
         entryItem = gtk.ToolItem()
         entry = gtk.Entry()
         entry.set_tooltip_text("Search online-life")
-        entry.connect("activate", self.entryActivated)
+        entry.connect("activate", self.entry_activated)
         entryItem.add(entry)
         toolbar.insert(entryItem, -1)
         
@@ -144,14 +146,14 @@ class OnlineLifeGui(gtk.Window):
         
         self.btnActors = gtk.ToggleToolButton(gtk.STOCK_INFO)
         self.btnActors.set_tooltip_text("Show/hide info")
-        self.btnActors.connect("clicked", self.btnActorsClicked)
+        self.btnActors.connect("clicked", self.btn_actors_clicked)
         toolbar.insert(self.btnActors, -1)
         
         toolbar.insert(gtk.SeparatorToolItem(), -1)
         
         btnExit = gtk.ToolButton(gtk.STOCK_QUIT)
         btnExit.set_tooltip_text("Quit program")
-        btnExit.connect("clicked", self.btnQuitClicked)
+        btnExit.connect("clicked", self.btn_quit_clicked)
         toolbar.insert(btnExit, -1)
         
         vbox.pack_start(toolbar, False, False, 1)
@@ -168,10 +170,10 @@ class OnlineLifeGui(gtk.Window):
         self.vbRight.set_size_request(SIDE_SIZE, -1)
         
         # Add widgets to vbLeft
-        self.tvCategories = self.createTreeView()
-        self.tvCategories.connect("row-activated", self.tvCategoriesRowActivated)
+        self.tvCategories = self.create_tree_view()
+        self.tvCategories.connect("row-activated", self.tv_categories_row_activated)
         self.tvCategories.show()
-        self.swCategories = self.createScrolledWindow()
+        self.swCategories = self.create_scrolled_window()
         self.swCategories.add(self.tvCategories)
         
         self.spCategories = gtk.Spinner()
@@ -183,8 +185,8 @@ class OnlineLifeGui(gtk.Window):
         self.hbCategoriesError = gtk.HBox(False, 1)
         self.hbCategoriesError.pack_start(btnCategoriesError, True, False, 10)
         
-        tvSavedItems = self.createTreeView()
-        swSavedItems = self.createScrolledWindow()
+        tvSavedItems = self.create_tree_view()
+        swSavedItems = self.create_scrolled_window()
         swSavedItems.add(tvSavedItems)
         frSavedItems = gtk.Frame("Saved items")
         frSavedItems.add(swSavedItems)
@@ -195,20 +197,20 @@ class OnlineLifeGui(gtk.Window):
         self.vbLeft.pack_start(frSavedItems, True, True, 1)
         
         # Add widgets to vbCenter
-        self.tvPlaylists = self.createTreeView()
-        self.tvPlaylists.connect("row-activated", self.tvPlaylistsRowActivated)
+        self.tvPlaylists = self.create_tree_view()
+        self.tvPlaylists.connect("row-activated", self.tv_playlists_row_activated)
         # Stores arg: title, flv, mpv
         self.playlistsStore = gtk.TreeStore(gtk.gdk.Pixbuf, str, str, str)
         self.singlePlaylistStore = gtk.ListStore(gtk.gdk.Pixbuf, str, str, str)
         self.tvPlaylists.show()
-        self.swPlaylists = self.createScrolledWindow()
+        self.swPlaylists = self.create_scrolled_window()
         self.swPlaylists.add(self.tvPlaylists)
         
         self.ivResults = gtk.IconView()
         self.ivResults.set_pixbuf_column(COL_PIXBUF)
         self.ivResults.set_text_column(COL_TEXT)
         self.ivResults.set_item_width(ICON_VIEW_ITEM_WIDTH)
-        self.swResults = self.createScrolledWindow()
+        self.swResults = self.create_scrolled_window()
         self.swResults.add(self.ivResults)
         self.swResults.show_all()
         vadj = self.swResults.get_vadjustment()
@@ -238,9 +240,9 @@ class OnlineLifeGui(gtk.Window):
         self.frInfo = gtk.Frame("Info")
         self.frInfo.add(self.lbInfo)
         
-        self.tvActors = self.createTreeView()
+        self.tvActors = self.create_tree_view()
         self.tvActors.connect("row-activated", self.tv_actors_row_activated)
-        swActors = self.createScrolledWindow()
+        swActors = self.create_scrolled_window()
         swActors.add(self.tvActors)
         swActors.show_all()
         self.frActors = gtk.Frame("Actors")
@@ -250,7 +252,7 @@ class OnlineLifeGui(gtk.Window):
         self.spActors.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
         
         btnActorsError = gtk.Button("Repeat")
-        btnActorsError.connect("clicked", self.btnActorsErrorClicked)
+        btnActorsError.connect("clicked", self.btn_actors_error_clicked)
         btnActorsError.show()
         self.hbActorsError = gtk.HBox(False, 1)
         self.hbActorsError.pack_start(btnActorsError, True, False, 10)
@@ -295,8 +297,8 @@ class OnlineLifeGui(gtk.Window):
         frActions.add(hbActions)
         frActions.show()
         
-        tvBackActors = self.createTreeView()
-        swBackActors = self.createScrolledWindow()
+        tvBackActors = self.create_tree_view()
+        swBackActors = self.create_scrolled_window()
         swBackActors.add(tvBackActors)
         frBackActors = gtk.Frame("Actors history")
         frBackActors.add(swBackActors)
@@ -344,7 +346,7 @@ class OnlineLifeGui(gtk.Window):
         self.update_prev_next_buttons()
         self.resultsPosition = None
         self.savedItemsPosition = None
-        self.listSavedFiles(True) # Show save results on start
+        self.list_saved_files(True) # Show save results on start
         
     def show_categories_spinner(self):
         self.spCategories.show()
@@ -472,7 +474,7 @@ class OnlineLifeGui(gtk.Window):
             self.cancel_image_threads()
             if self.btnSavedItems.get_active():
                 self.btnSavedItems.set_active(False)
-                self.listSavedFiles()
+                self.list_saved_files()
         self.show_center_spinner(title == "")
         
     def on_first_item_received(self, title = ""):
@@ -643,7 +645,7 @@ class OnlineLifeGui(gtk.Window):
         self.playlistsTitle = store.get_value(resultsIter, 1)
         self.actorsLink = store.get_value(resultsIter, 2)
         if self.btnActors.get_active():
-            self.startActorsThread()
+            self.start_actors_thread()
         else:
             # This will get actors for last constant links item if actors button is pressed
             self.isActorsAvailable  = False
@@ -676,7 +678,7 @@ class OnlineLifeGui(gtk.Window):
         self.hbActorsError.show()    
 
     def show_save_or_delete_button(self):
-        if self.isLinkSaved(self.playlistsTitle):
+        if self.is_link_saved(self.playlistsTitle):
             self.btnDelete.show()
             self.btnSave.hide()
         else:
@@ -729,49 +731,49 @@ class OnlineLifeGui(gtk.Window):
             dialog.destroy()
             
     def btn_save_clicked(self, widget):
-        self.saveLink(self.playlistsTitle, self.actorsLink)
+        self.save_link(self.playlistsTitle, self.actorsLink)
         self.show_save_or_delete_button()
-        self.saveImage(self.playlistsTitle)
+        self.save_image(self.playlistsTitle)
         self.preserve_saved_items_position()
-        self.listSavedFiles()
+        self.list_saved_files()
         
     def btn_delete_clicked(self, widget):
-        self.removeLink(self.playlistsTitle)
+        self.remove_link(self.playlistsTitle)
         self.show_save_or_delete_button()
-        self.removeImage(self.playlistsTitle)
+        self.remove_image(self.playlistsTitle)
         self.preserve_saved_items_position()
-        self.listSavedFiles()
+        self.list_saved_files()
         
-    def btnSavedItemsClicked(self, widget):
-        self.listSavedFiles()
+    def btn_saved_items_clicked(self, widget):
+        self.list_saved_files()
         
-    def btnRefreshClicked(self, widget):
+    def btn_refresh_clicked(self, widget):
         if not self.resultsThread.is_alive():
             self.resultsThread = ResultsThread(self,
                                                self.resultsLink,
                                                self.resultsTitle)
             self.resultsThread.start()
         
-    def btnUpClicked(self, widget):
-        self.setResultsTitle()
+    def btn_up_clicked(self, widget):
+        self.set_results_title()
         self.show_results_data()
-        self.listSavedFiles()
+        self.list_saved_files()
         
-    def btnPrevClicked(self, widget):
+    def btn_prev_clicked(self, widget):
         self.save_to_next_history()
         if(len(self.prevHistory) > 0):
             historyItem = self.prevHistory.pop()
             self.restore_from_history(historyItem)
         self.update_prev_next_buttons()
         
-    def btnNextClicked(self, widget):
+    def btn_next_clicked(self, widget):
         self.save_to_prev_history()
         if(len(self.nextHistory) > 0):
             historyItem = self.nextHistory.pop()
             self.restore_from_history(historyItem)
         self.update_prev_next_buttons()
 
-    def setResultsTitle(self):
+    def set_results_title(self):
         if self.resultsTitle == None:
             self.set_title(PROG_NAME)
         else:
@@ -788,7 +790,7 @@ class OnlineLifeGui(gtk.Window):
         url_values = urllib.urlencode(data)
         return DOMAIN + "?" + url_values
         
-    def entryActivated(self, widget):
+    def entry_activated(self, widget):
         query = widget.get_text().strip()
         if query != "":
             self.query = query
@@ -798,28 +800,28 @@ class OnlineLifeGui(gtk.Window):
                 self.resultsThread = ResultsThread(self, self.resultsLink, query)
                 self.resultsThread.start()
         
-    def btnActorsClicked(self, widget):
+    def btn_actors_clicked(self, widget):
         if self.btnActors.get_active():
             if self.isActorsAvailable:
                 self.vbRight.show()
             elif self.actorsLink != "":
-                self.startActorsThread()
+                self.start_actors_thread()
         else:
             self.vbRight.hide()
     
-    def startActorsThread(self):
+    def start_actors_thread(self):
         if self.actorsThread == None or not self.actorsThread.is_alive():
             self.on_actors_pre_execute()
             self.actorsThread = ActorsThread(self, self.actorsLink, self.playlistsTitle)
             self.actorsThread.start()   
             
-    def btnActorsErrorClicked(self, widget):
-        self.startActorsThread()
+    def btn_actors_error_clicked(self, widget):
+        self.start_actors_thread()
         
-    def btnQuitClicked(self, widget):
+    def btn_quit_clicked(self, widget):
         self.destroy()
         
-    def onDestroy(self, widget):
+    def on_destroy(self, widget):
         if self.categoriesThread != None and self.categoriesThread.is_alive():
             self.categoriesThread.cancel()
         if self.resultsThread != None and self.resultsThread.is_alive():
@@ -829,7 +831,7 @@ class OnlineLifeGui(gtk.Window):
         self.cancel_image_threads()
         gtk.main_quit()
         
-    def tvCategoriesRowActivated(self, treeview, path, view_column):
+    def tv_categories_row_activated(self, treeview, path, view_column):
         model = treeview.get_model()
         iter_child = model.get_iter(path)
         values = model.get(iter_child, 1, 2) # 0 column is icon
@@ -844,28 +846,28 @@ class OnlineLifeGui(gtk.Window):
         self.resultsThread = ResultsThread(self, link, title)
         self.resultsThread.start()
         
-    def onPlaylistsPreExecute(self):
+    def on_playlists_pre_execute(self):
         self.btnSavedItems.set_sensitive(False)
         self.playlistsStore.clear()
         self.singlePlaylistStore.clear()
         self.show_center_spinner(False)
         
-    def setPlaylistsModel(self):
+    def set_playlists_model(self):
         self.tvPlaylists.set_model(self.playlistsStore)
         
-    def setSinglePlaylistModel(self):
+    def set_single_playlist_model(self):
         self.tvPlaylists.set_model(self.singlePlaylistStore)
         
-    def appendToPlaylists(self, title):
+    def append_to_playlists(self, title):
         self.itPlaylist = self.playlistsStore.append(None, [DIR_PIXBUF, title, None, None])
         
-    def appendToPlaylist(self, title, flv, mp4):
+    def append_to_playlist(self, title, flv, mp4):
         self.playlistsStore.append(self.itPlaylist, [FILE_PIXBUF, title, flv, mp4])
         
-    def appendToSinglePlaylist(self, title, flv, mp4):
+    def append_to_single_playlist(self, title, flv, mp4):
         self.singlePlaylistStore.append([FILE_PIXBUF, title, flv, mp4])
         
-    def tvPlaylistsRowActivated(self, treeview, path, view_column):
+    def tv_playlists_row_activated(self, treeview, path, view_column):
         model = treeview.get_model()
         pl_iter = model.get_iter(path)
         values = model.get(pl_iter, 1, 2, 3) # 0 column is icon
@@ -873,7 +875,7 @@ class OnlineLifeGui(gtk.Window):
             sizeThread = LinksSizeThread(self, values[0], values[1], values[2])
             sizeThread.start()
             
-    def createTreeView(self):
+    def create_tree_view(self):
         treeView = gtk.TreeView()
         
         rendererPixbuf = gtk.CellRendererPixbuf()
@@ -888,55 +890,55 @@ class OnlineLifeGui(gtk.Window):
         
         return treeView
         
-    def createScrolledWindow(self):
+    def create_scrolled_window(self):
         scrolledWindow = gtk.ScrolledWindow()
         scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrolledWindow.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         return scrolledWindow
 
-    def isImageSaved(self, title):
+    def is_image_saved(self, title):
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
         return os.path.exists(path)
 
-    def getImage(self, title):
+    def get_image(self, title):
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
         return gtk.gdk.pixbuf_new_from_file(path)
 
-    def saveImage(self, title):
+    def save_image(self, title):
         if not os.path.exists(APP_SAVED_IMAGES_DIR):
             os.makedirs(APP_SAVED_IMAGES_DIR)
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
         if self.savedItemImage != None:
                 self.savedItemImage.save(path, "png")
 
-    def removeImage(self, title):
+    def remove_image(self, title):
         path = os.path.join(APP_SAVED_IMAGES_DIR, title)
         if os.path.exists(path):
             os.remove(path)
 
-    def isLinkSaved(self, title):
+    def is_link_saved(self, title):
          path = os.path.join(APP_SAVES_DIR, title)
          return os.path.exists(path)
 
-    def saveLink(self, title, link):
+    def save_link(self, title, link):
         if not os.path.exists(APP_SAVES_DIR):
             os.makedirs(APP_SAVES_DIR)
         path = os.path.join(APP_SAVES_DIR, title)
         with open(path, "w") as f:
             f.write(link)
 
-    def removeLink(self, title):
+    def remove_link(self, title):
         path = os.path.join(APP_SAVES_DIR, title)
         if os.path.exists(path):
             os.remove(path)
 
-    def getSavedLink(self, title):
+    def get_saved_link(self, title):
         filename = os.path.join(APP_SAVES_DIR, title)
         with open(filename, "r") as f:
             link = f.read()
             return link
 
-    def listSavedFiles(self, showOnStart = False):
+    def list_saved_files(self, showOnStart = False):
         try:
             saves = os.listdir(APP_SAVES_DIR)
             if len(saves) > 0:
@@ -959,9 +961,9 @@ class OnlineLifeGui(gtk.Window):
                                                 str)
                 self.ivResults.set_model(savedItemsStore)
                 for title in saves:
-                    link = self.getSavedLink(title)
-                    if self.isImageSaved(title):
-                        savedItemsStore.append([self.getImage(title),
+                    link = self.get_saved_link(title)
+                    if self.is_image_saved(title):
+                        savedItemsStore.append([self.get_image(title),
                                                 title,
                                                 link,
                                                 None])
@@ -987,7 +989,7 @@ class OnlineLifeGui(gtk.Window):
                     self.ivResults.scroll_to_path(self.resultsPosition,
                                                   False, 0, 0)
                     self.btnRefresh.set_sensitive(True)
-                self.setResultsTitle()
+                self.set_results_title()
             if not self.swResults.get_visible():
                 self.show_results_data()
         except OSError as ex:
@@ -1473,7 +1475,7 @@ class JsThread(threading.Thread):
             
     def playlistParser(self, comment, json):
         if comment != "":
-            self.gui.appendToPlaylists(comment)
+            self.gui.append_to_playlists(comment)
         
         item_start = json.find("{")
         item_end = json.find("}", item_start+1)
@@ -1481,9 +1483,9 @@ class JsThread(threading.Thread):
             item = json[item_start: item_end]
             play_item = PlayItem(item)
             if comment != "":
-                self.gui.appendToPlaylist(play_item.comment, play_item.file, play_item.download)
+                self.gui.append_to_playlist(play_item.comment, play_item.file, play_item.download)
             else:
-                self.gui.appendToSinglePlaylist(play_item.comment, play_item.file, play_item.download)
+                self.gui.append_to_single_playlist(play_item.comment, play_item.file, play_item.download)
             item_start = json.find("{", item_end)
             item_end = json.find("}", item_start)
             
@@ -1505,18 +1507,18 @@ class JsThread(threading.Thread):
                 self.playlistParser(comment, items)
                 # In case of single playlist
                 if(comment == ""):
-                    self.gui.setSinglePlaylistModel()
+                    self.gui.set_single_playlist_model()
                     self.gui.show_playlists_data()
                     return
             
             playlist_begin = json.find(begin, playlist_end+2)
             playlist_end = json.find(end, playlist_begin+1)
         #In case of multiple playlists
-        self.gui.setPlaylistsModel()
+        self.gui.set_playlists_model()
         self.gui.show_playlists_data()
             
     def getPlaylist(self, link):
-        gobject.idle_add(self.gui.onPlaylistsPreExecute)
+        gobject.idle_add(self.gui.on_playlists_pre_execute)
         try:
             response = urllib2.urlopen(link)
             json = response.read()
@@ -1603,7 +1605,7 @@ class PlayItemDialog:
             Popen(["mpv", self.play_item.download])
         elif response == self.RESPONSE_INFO:
             self.gui.btnActors.set_active(True)
-            self.gui.startActorsThread()
+            self.gui.start_actors_thread()
         dialog.destroy()
 
 class HistoryItem:
