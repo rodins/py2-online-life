@@ -1002,20 +1002,6 @@ class CategoriesThread(threading.Thread):
         self.gui = gui
         self.isCancelled = False
         threading.Thread.__init__(self)
-        
-    def parseAnchor(self, line):
-        anchor_begin = line.find("<a href=")
-        anchor_end = line.find("</a>")
-        if anchor_begin != -1 and anchor_end != -1:
-            anchor = line[anchor_begin:anchor_end]
-            href_begin = anchor.find("\"")
-            href_end = anchor.find("\"", href_begin+1)
-            title_begin = anchor.find(">")
-            href = anchor[href_begin+1: href_end]
-            title = anchor[title_begin+1:].decode('cp1251')
-            if href.find(WDOMAIN) == -1:
-                href = WDOMAIN + href
-            return (title, href)
             
     def cancel(self):
         self.isCancelled = True
