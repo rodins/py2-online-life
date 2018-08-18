@@ -247,8 +247,11 @@ class OnlineLifeGui(gtk.Window):
         btn_actors_error = gtk.Button("Repeat")
         btn_actors_error.connect("clicked", self.btn_actors_error_clicked)
         btn_actors_error.show()
+        
         self.hb_actors_error = gtk.HBox(False, 1)
         self.hb_actors_error.pack_start(btn_actors_error, True, False, 10)
+
+        self.lb_no_actors = gtk.Label("No actors")
         
         sp_links = gtk.Spinner()
         sp_links.set_size_request(SPINNER_SIZE, SPINNER_SIZE)
@@ -300,6 +303,7 @@ class OnlineLifeGui(gtk.Window):
         self.vb_right.pack_start(self.fr_actors, True, True, 1)
         self.vb_right.pack_start(self.sp_actors, True, False, 1)
         self.vb_right.pack_start(self.hb_actors_error, True, False, 1)
+        self.vb_right.pack_start(self.lb_no_actors, True, False, 1)
         self.vb_right.pack_start(fr_actions, False, False, 1)
         self.vb_right.pack_start(fr_back_actors, True, True, 1)
         
@@ -655,6 +659,7 @@ class OnlineLifeGui(gtk.Window):
         self.fr_info.hide()
         self.fr_actors.hide()
         self.hb_actors_error.hide()
+        self.lb_no_actors.hide()
         
     def show_actors_data(self):
         self.sp_actors.stop()
@@ -668,7 +673,12 @@ class OnlineLifeGui(gtk.Window):
         self.sp_actors.hide()
         self.fr_info.hide()
         self.fr_actors.hide()
-        self.hb_actors_error.show()    
+        self.hb_actors_error.show()
+
+    def show_no_actors(self):
+        self.sp_actors.stop()
+        self.sp_actors.hide()
+        self.lb_no_actors.show()
 
     def show_save_or_delete_button(self):
         if self.is_link_saved(self.playlists_title):
@@ -1257,8 +1267,10 @@ class ActorsThread(threading.Thread):
                 if not self.is_cancelled:
                     parser.feed(line.decode('cp1251'))
                 else:
-                    parser.close()
                     break
+            if parser.count == 0:
+                gobject.idle_add(self.gui.show_no_actors)
+            parser.close()
         except Exception as ex:
             self.gui.show_actors_error()
             print ex
