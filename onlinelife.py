@@ -552,9 +552,10 @@ class OnlineLifeGui(gtk.Window):
             self.results_store.append([EMPTY_POSTER, title, href, image])
     
     def scroll_to_top_of_list(self, store):
-        first_iter = store.get_iter_first()
-        first_path = store.get_path(first_iter)
-        self.iv_results.scroll_to_path(first_path, False, 0, 0)
+        if store != None:
+            first_iter = store.get_iter_first()
+            first_path = store.get_path(first_iter)
+            self.iv_results.scroll_to_path(first_path, False, 0, 0)
         
     def set_results_next_link(self, link):
         if link != "":
@@ -691,10 +692,10 @@ class OnlineLifeGui(gtk.Window):
     def on_actors_pre_execute(self):
         self.show_actors_spinner()
         self.show_save_or_delete_button()
-        
-    def on_actors_first_item_received(self, info, name, href):
         self.actors_store = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
         self.tv_actors.set_model(self.actors_store)
+        
+    def on_actors_first_item_received(self, info, name, href):
         self.lb_info.set_text(info)
         self.add_to_actors_model(name, href)
         self.is_actors_available = True
@@ -1312,8 +1313,11 @@ class ActorsHTMLParser(HTMLParser):
         utf_data = utf_data.strip()
         if utf_data != "" and utf_data != ",":
             if self.tag == 'a':
-                if self.is_director:
-                    name = utf_data + u" (режиссер)"
+                if self.is_director or self.is_actors:
+                    if self.is_director:
+                        name = utf_data + u" (режиссер)"
+                    else:
+                        name = utf_data
                     if self.count == 0:
                         gobject.idle_add(
                             self.task.gui.on_actors_first_item_received,
@@ -1323,11 +1327,6 @@ class ActorsHTMLParser(HTMLParser):
                     else:
                         gobject.idle_add(self.task.gui.add_to_actors_model, 
                                      name, 
-                                     self.href)
-                    self.count += 1
-                elif self.is_actors:
-                    gobject.idle_add(self.task.gui.add_to_actors_model, 
-                                     utf_data, 
                                      self.href)
                     self.count += 1
             elif self.tag == 'p':
