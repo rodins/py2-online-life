@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# TODO: nothing found for results and actors
+# TODO: fix saving on playlist displayed swithces back to results bug
+# TODO: fix on traylers two play buttons displayed
 
 import pygtk
 pygtk.require('2.0')
@@ -1590,13 +1591,29 @@ class PlayItemDialog:
         label.show()
         response = dialog.run()
         if response == self.RESPONSE_FLV:
-            Popen(["mpv", self.play_item.file])
+            self.detect_player(self.play_item.file)
         elif response == self.RESPONSE_MP4:
-            Popen(["mpv", self.play_item.download])
+            self.detect_player(self.play_item.download)
         elif response == self.RESPONSE_INFO:
             self.gui.btn_actors.set_active(True)
             self.gui.start_actors_thread()
         dialog.destroy()
+
+    def detect_player(self, link):
+        if os.system("which mpv") == 0:
+            self.open_mpv(link)
+        elif os.system("which omxplayer") == 0: # Papberry Pi default player
+            self.open_omxplayer(link)
+        else:
+            print("TODO: display dialog that player is not found")
+
+    def open_omxplayer(self, link):
+        Popen(["lxterminal", "-e",
+	       "omxplayer", "-b", "--live",
+		link])
+
+    def open_mpv(self, link):
+        Popen(["mpv", link])
 
 class HistoryItem:
     def __init__(self, title, store, refreshLink, next_link, results_position):
