@@ -5,6 +5,7 @@ import urllib
 import urllib2
 import sys
 from subprocess import call
+import requests
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -400,20 +401,62 @@ def fileToString():
     with open("Home.html", "r") as f:
         page = f.read()
         return page
+
+def get_link_size(link):
+    MBFACTOR = float(1 << 20)
+    try:
+        response = requests.head(link)
+        size = response.headers.get('content-length', 0)
+        if size == 0:
+            return ""
+        return ' ({:.2f} Mb)'.format(int(size)/MBFACTOR)
+    except Exception as ex:
+        print ex
+        return ""
+
+def play_single_link(link, size):
+    print("Link found. Size: " + size)
+    print(link)
+    ans = raw_input("Do you want to play file? (p - play, q - return): ")
+    if ans == "p":
+        #call(["mplayer", "-fs", play_item.file])
+        call(["omxplayer", "-b", link])
+    elif ans == "q":
+        return
+
+def play_two_links(flv, flv_size, mp4, mp4_size):
+    print("FLV link. Size: " + flv_size)
+    print(flv)
+    print("MP4 link. Size: " + mp4_size)
+    print(mp4)
+    
+    ans = raw_input(
+        "Select link to play (f - flv, m - mp4, q - return): ")
+    if ans == "f" and play_item.file != "":
+        #call(["mplayer", "-fs", play_item.file])
+        call(["omxplayer", "-b", flv])
+    elif ans == "m" and play_item.download != "":
+        call(["omxplayer", "-b", mp4])
+    elif ans == "q":
+        return
+    
         
 def processPlayItem(play_item):
     print(play_item.comment)
-    print("Play and download links found")
-    print(play_item.file)
-    print(play_item.download)
-    
-    ans = raw_input("Do you want to play or download file (p - play, d - download, q - return): ")
-    if ans == "p" and play_item.file != "":
-        call(["mplayer", "-fs", play_item.file])
-    elif ans == "d" and play_item.download != "":
-        call(["wget", "-c", play_item.download])
-    elif ans == "q":
-        return
+
+    if play_item.file == play_item.download:
+        link_size = get_link_size(play_item.download)
+        play_single_link(play_item.download, link_size)
+    else:
+        file_size = get_link_size(play_item.file)
+        download_size = get_link_size(play_item.download)
+        if file_size == "":
+            play_single_link(play_item.download, download_size)
+        else:
+            play_two_links(play_item.file,
+                           file_size,
+                           play_item.download,
+                           download_size)
         
 def processLinks(result):
     result_id = getHrefId(result.href)
