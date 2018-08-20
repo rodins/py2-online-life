@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# TODO: fix saving on playlist displayed swithces back to results bug
 # TODO: fix on traylers two play buttons displayed
 
 import pygtk
@@ -995,8 +994,6 @@ class OnlineLifeGui(gtk.Window):
                                                   False, 0, 0)
                     self.btn_refresh.set_sensitive(True)
                 self.set_results_title()
-            if not self.sw_results.get_visible():
-                self.show_results_data()
         except OSError as ex:
             self.btn_saved_items.set_sensitive(False)
             self.btn_saved_items.set_active(False)
