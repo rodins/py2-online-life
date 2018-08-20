@@ -4,8 +4,8 @@
 import urllib
 import urllib2
 import sys
-from subprocess import call
 import requests
+import os
 
 DOMAIN = "http://online-life.club"
 WDOMAIN = "http://www.online-life.club"
@@ -420,7 +420,7 @@ def play_single_link(link, size):
     ans = raw_input("Do you want to play file? (p - play, q - return): ")
     if ans == "p":
         #call(["mplayer", "-fs", play_item.file])
-        call(["omxplayer", "-b", link])
+        os.system("omxplayer -b " + link)
     elif ans == "q":
         return
 
@@ -434,9 +434,9 @@ def play_two_links(flv, flv_size, mp4, mp4_size):
         "Select link to play (f - flv, m - mp4, q - return): ")
     if ans == "f" and play_item.file != "":
         #call(["mplayer", "-fs", play_item.file])
-        call(["omxplayer", "-b", flv])
+        os.system("omxplayer -b " + flv)
     elif ans == "m" and play_item.download != "":
-        call(["omxplayer", "-b", mp4])
+        os.system("omxplayer -b " + mp4)
     elif ans == "q":
         return
     
