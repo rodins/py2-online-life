@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# TODO: fix on traylers two play buttons displayed
-
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -1577,8 +1575,8 @@ class PlayItemDialog:
             dialog.add_button(self.play_title, self.RESPONSE_MP4)
             dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT)
         else:
-            dialog.add_button(self.play_title, self.RESPONSE_FLV)
-            dialog.add_button(self.play_title, self.RESPONSE_MP4)
+            dialog.add_button(self.flv_title, self.RESPONSE_FLV)
+            dialog.add_button(self.mp4_title, self.RESPONSE_MP4)
             dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT)
             
         if self.mp4_size == "":
