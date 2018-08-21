@@ -419,8 +419,7 @@ def play_single_link(link, size):
     print(link)
     ans = raw_input("Do you want to play file? (p - play, q - return): ")
     if ans == "p":
-        #call(["mplayer", "-fs", play_item.file])
-        os.system("omxplayer -b " + link)
+        play_link(link)
     elif ans == "q":
         return
 
@@ -433,14 +432,23 @@ def play_two_links(flv, flv_size, mp4, mp4_size):
     ans = raw_input(
         "Select link to play (f - flv, m - mp4, q - return): ")
     if ans == "f" and play_item.file != "":
-        #call(["mplayer", "-fs", play_item.file])
-        os.system("omxplayer -b " + flv)
+        play_link(flv)
     elif ans == "m" and play_item.download != "":
-        os.system("omxplayer -b " + mp4)
+        play_link(mp4)
     elif ans == "q":
         return
+
+def play_link(link):
+    if os.system("which mplayer") == 0:
+        if len(sys.argv) == 2 and sys.argv[1] == "fbdev":
+            os.system("mplayer -vo fbdev " + link)
+        else:
+            os.system("mplayer -fs " + link)
+    elif os.system("which omxplayer") == 0: # Papberry Pi default player
+        os.system("omxplayer -b " + link)
+    else:
+        print("Supported player is not found")
     
-        
 def processPlayItem(play_item):
     print(play_item.comment)
 
