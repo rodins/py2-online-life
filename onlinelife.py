@@ -15,9 +15,9 @@ from subprocess import Popen
 import threading
 from HTMLParser import HTMLParser
 
-DOMAIN = "http://online-life.club"
-WDOMAIN = "http://www.online-life.club"
-DOMAIN_NO_SUFFIX = "www.online-life."
+DOMAIN = "http://onlinelife.club"
+WDOMAIN = "http://www.onlinelife.club"
+DOMAIN_NO_SUFFIX = "www.onlinelife."
 PROG_NAME = "Online life"
 APP_DIR_NAME = ".gtk_online_life"
 SAVES_DIR_NAME = "saves"
