@@ -42,31 +42,31 @@ APP_SAVED_IMAGES_DIR = os.path.join(HOME,
                                     APP_DIR_NAME,
                                     SAVED_IMAGES_DIR_NAME)
     
-class PlayItem:
-    def __init__(self, js = ""):
-        self.comment = ""
-        self.file = ""
-        self.download = ""
-        
-        if (js != ""):
-            # Search for file
-            file_begin = js.find("\"file\"")
-            file_end = js.find("\"", file_begin+10)
-            if file_begin != -1 and file_end != -1:
-                self.file = js[file_begin+8: file_end]
-            
-            # Search for download
-            download_begin = js.find("\"download\"")
-            download_end = js.find("\"", download_begin+12)
-            if download_begin != -1 and download_end != -1:
-                self.download = js[download_begin+12: download_end]
-                
-            # Search for comment
-            comment_begin = js.find("\"comment\"")
-            comment_end = js.find("\"", comment_begin+11)
-            if comment_begin != -1 and comment_end != -1:
-                self.comment = js[comment_begin+11: comment_end]
-    
+##class PlayItem:
+##    def __init__(self, js = ""):
+##        self.comment = ""
+##        self.file = ""
+##        self.download = ""
+##        
+##        if (js != ""):
+##            # Search for file
+##            file_begin = js.find("\"file\"")
+##            file_end = js.find("\"", file_begin+10)
+##            if file_begin != -1 and file_end != -1:
+##                self.file = js[file_begin+8: file_end]
+##            
+##            # Search for download
+##            download_begin = js.find("\"download\"")
+##            download_end = js.find("\"", download_begin+12)
+##            if download_begin != -1 and download_end != -1:
+##                self.download = js[download_begin+12: download_end]
+##                
+##            # Search for comment
+##            comment_begin = js.find("\"comment\"")
+##            comment_end = js.find("\"", comment_begin+11)
+##            if comment_begin != -1 and comment_end != -1:
+##                self.comment = js[comment_begin+11: comment_end]
+##    
 class OnlineLifeGui(gtk.Window):
     def __init__(self):
         super(OnlineLifeGui, self).__init__()
@@ -640,15 +640,17 @@ class OnlineLifeGui(gtk.Window):
         self.saved_item_image = store.get_value(results_iter, 0)
         self.playlists_title = store.get_value(results_iter, 1)
         self.actors_link = store.get_value(results_iter, 2)
-        if self.btn_actors.get_active():
-            self.start_actors_thread()
-        else:
-            # This will get actors for last constant links item if actors button is pressed
-            self.is_actors_available  = False
-            hrefId = self.get_href_id(self.actors_link)
-            url = "http://play.cidwo.com/js.php?id=" + hrefId
-            referer = "http://play.cidwo.com/player.php?newsid=" + hrefId
-            self.start_js_thread(url, referer)
+        self.btn_actors.set_active(True)
+        self.start_actors_thread()
+##        if self.btn_actors.get_active():
+##            self.start_actors_thread()
+##        else:
+##            # This will get actors for last constant links item if actors button is pressed
+##            self.is_actors_available  = False
+##            hrefId = self.get_href_id(self.actors_link)
+##            url = "http://play.cidwo.com/js.php?id=" + hrefId
+##            referer = "http://play.cidwo.com/player.php?newsid=" + hrefId
+##            self.start_js_thread(url, referer)
         
     def show_actors_spinner(self):
         self.btn_open.set_sensitive(False)
@@ -1355,17 +1357,21 @@ class PlayerThread(threading.Thread):
     def cancel(self):
         self.is_cancelled = True
         
-    def start_js_thread(self, js_link):
-        if self.gui.js_thread == None or not self.gui.js_thread.is_alive():
-            # params to init: link and referer
-            self.gui.js_thread = JsThread(self.gui, js_link, self.gui.player_url)
-            self.gui.js_thread.start()
+##    def start_js_thread(self, js_link):
+##        if self.gui.js_thread == None or not self.gui.js_thread.is_alive():
+##            # params to init: link and referer
+##            self.gui.js_thread = JsThread(self.gui, js_link, self.gui.player_url)
+##            self.gui.js_thread.start()
         
     def run(self):
         try:
+            headers = {'Referer': self.gui.actors_link}
             # Go to player link find js link
             parser = PlayerHTMLParser(self)
-            response = urllib2.urlopen(self.gui.player_url)
+            req = urllib2.Request(self.gui.player_url, None, headers)
+            response = urllib2.urlopen(req)
+##            player_html = response.read()
+##            print player_html
             for line in response:
                 if not self.is_cancelled:
                     parser.feed(line)
@@ -1379,15 +1385,29 @@ class PlayerThread(threading.Thread):
 class PlayerHTMLParser(HTMLParser):
     def __init__(self, task):
         self.task = task
+        self.isScript = False
         HTMLParser.__init__(self)
     
     def handle_starttag(self, tag, attrs):
         if tag == "script":
-            for attr in attrs:
-                if attr[0] == "src" and attr[1].find("js.php") != -1:
-                    self.task.is_cancelled = True
-                    gobject.idle_add(self.task.start_js_thread, "http:" + attr[1])
-                    break
+            self.isScript = True
+##            for attr in attrs:
+##                if attr[0] == "src" and attr[1].find("js.php") != -1:
+##                    self.task.is_cancelled = True
+##                    gobject.idle_add(self.task.start_js_thread, "http:" + attr[1])
+##                    break
+
+    def handle_data(self, data):
+        if self.isScript:
+            link_begin = data.find("ref_url:")
+            link_end = data.find("\"", link_begin+15)
+            if link_begin != -1 and link_end != -1:
+                link = urllib.unquote(data[link_begin+10: link_end])
+                print link
+        
+    def handle_endtag(self, tag):
+        if tag == "script":
+            self.isScript = False
 
 def get_link_size(link):
     MBFACTOR = float(1 << 20)
@@ -1427,116 +1447,114 @@ class LinksSizeThread(threading.Thread):
         else:
             flv_size = get_link_size(self.flv)
             mp4_size = get_link_size(self.mp4)
-        gobject.idle_add(self.run_play_item_dialog, 
-                         flv_size, 
-                         mp4_size)
+            gobject.idle_add(self.run_play_item_dialog, flv_size, mp4_size)
                     
-class JsThread(threading.Thread):
-    def __init__(self, gui, url, referer):
-        self.gui = gui
-        self.jsUrl = url
-        self.referer = referer
-        self.is_cancelled = False
-        self.trailersTitle = self.gui.playlists_title
-        threading.Thread.__init__(self)
-        
-    def cancel(self):
-        self.is_cancelled = True
-        
-    def playlist_link_parser(self, js):
-        link_begin = js.find("pl:")
-        link_end = js.find("\"", link_begin+4)
-        if link_begin != -1 and link_end != -1:
-            link = js[link_begin+4: link_end]
-            return link
-        return ""
-        
-    def run_play_item_dialog(self, play_item, flv_size, mp4_size):
-        PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
-            
-    def play_item_parser(self, js):
-        play_item = PlayItem(js)
-            
-        return play_item
-            
-    def playlist_parser(self, comment, json):
-        if comment != "":
-            self.gui.append_to_playlists(comment)
-        
-        item_start = json.find("{")
-        item_end = json.find("}", item_start+1)
-        while item_start != -1 and item_end != -1:
-            item = json[item_start: item_end]
-            play_item = PlayItem(item)
-            if comment != "":
-                self.gui.append_to_playlist(play_item.comment, play_item.file, play_item.download)
-            else:
-                self.gui.append_to_single_playlist(play_item.comment, play_item.file, play_item.download)
-            item_start = json.find("{", item_end)
-            item_end = json.find("}", item_start)
-            
-    def playlists_parser(self, json):
-        begin = "\"comment\""
-        end = "]"
-        playlist_begin = json.find(begin)
-        playlist_end = json.find(end, playlist_begin)
-        while playlist_begin != -1 and playlist_end != -1:
-            playlist = json[playlist_begin-1: playlist_end]
-            comment_begin = playlist.find(":\"")
-            comment_end = playlist.find("\"", comment_begin+2)
-            if comment_begin != -1 and comment_end != -1:
-                comment = playlist[comment_begin+2: comment_end]
-                if playlist.find("\"playlist\"") == -1:
-                    comment = ""
-                    comment_end = -1
-                items = playlist[comment_end+1:]        
-                self.playlist_parser(comment, items)
-                # In case of single playlist
-                if(comment == ""):
-                    self.gui.set_single_playlist_model()
-                    self.gui.show_playlists_data()
-                    return
-            
-            playlist_begin = json.find(begin, playlist_end+2)
-            playlist_end = json.find(end, playlist_begin+1)
-        #In case of multiple playlists
-        self.gui.set_playlists_model()
-        self.gui.show_playlists_data()
-            
-    def get_playlist(self, link):
-        gobject.idle_add(self.gui.on_playlists_pre_execute)
-        try:
-            response = urllib2.urlopen(link)
-            json = response.read()
-            gobject.idle_add(self.playlists_parser, json)
-        except Exception as ex:
-            print ex
-            gobject.idle_add(self.gui.show_center_error, "playlists_error")
-                
-    def run(self):
-        headers = {'Referer': self.referer}
-        try:
-            req = urllib2.Request(self.jsUrl, None, headers)
-            response = urllib2.urlopen(req)
-            js = response.read()
-                
-            play_item = PlayItem(js.decode('cp1251'))
-            if play_item.comment != "":
-                if len(play_item.comment) == 1:
-                    play_item.comment = self.trailersTitle
-                flv_size = get_link_size(play_item.file)
-                mp4_size = get_link_size(play_item.download)
-                gobject.idle_add(self.run_play_item_dialog, 
-                                 play_item, 
-                                 flv_size, 
-                                 mp4_size)
-            else:
-                playlist_link = self.playlist_link_parser(js)
-                self.get_playlist(playlist_link)
-            
-        except Exception as ex:
-            print ex
-            gobject.idle_add(show_error_dialog, self.gui)
+##class JsThread(threading.Thread):
+##    def __init__(self, gui, url, referer):
+##        self.gui = gui
+##        self.jsUrl = url
+##        self.referer = referer
+##        self.is_cancelled = False
+##        self.trailersTitle = self.gui.playlists_title
+##        threading.Thread.__init__(self)
+##        
+##    def cancel(self):
+##        self.is_cancelled = True
+##        
+##    def playlist_link_parser(self, js):
+##        link_begin = js.find("pl:")
+##        link_end = js.find("\"", link_begin+4)
+##        if link_begin != -1 and link_end != -1:
+##            link = js[link_begin+4: link_end]
+##            return link
+##        return ""
+##        
+##    def run_play_item_dialog(self, play_item, flv_size, mp4_size):
+##        PlayItemDialog(self.gui, play_item, flv_size, mp4_size)
+##            
+##    def play_item_parser(self, js):
+##        play_item = PlayItem(js)
+##            
+##        return play_item
+##            
+##    def playlist_parser(self, comment, json):
+##        if comment != "":
+##            self.gui.append_to_playlists(comment)
+##        
+##        item_start = json.find("{")
+##        item_end = json.find("}", item_start+1)
+##        while item_start != -1 and item_end != -1:
+##            item = json[item_start: item_end]
+##            play_item = PlayItem(item)
+##            if comment != "":
+##                self.gui.append_to_playlist(play_item.comment, play_item.file, play_item.download)
+##            else:
+##                self.gui.append_to_single_playlist(play_item.comment, play_item.file, play_item.download)
+##            item_start = json.find("{", item_end)
+##            item_end = json.find("}", item_start)
+##            
+##    def playlists_parser(self, json):
+##        begin = "\"comment\""
+##        end = "]"
+##        playlist_begin = json.find(begin)
+##        playlist_end = json.find(end, playlist_begin)
+##        while playlist_begin != -1 and playlist_end != -1:
+##            playlist = json[playlist_begin-1: playlist_end]
+##            comment_begin = playlist.find(":\"")
+##            comment_end = playlist.find("\"", comment_begin+2)
+##            if comment_begin != -1 and comment_end != -1:
+##                comment = playlist[comment_begin+2: comment_end]
+##                if playlist.find("\"playlist\"") == -1:
+##                    comment = ""
+##                    comment_end = -1
+##                items = playlist[comment_end+1:]        
+##                self.playlist_parser(comment, items)
+##                # In case of single playlist
+##                if(comment == ""):
+##                    self.gui.set_single_playlist_model()
+##                    self.gui.show_playlists_data()
+##                    return
+##            
+##            playlist_begin = json.find(begin, playlist_end+2)
+##            playlist_end = json.find(end, playlist_begin+1)
+##        #In case of multiple playlists
+##        self.gui.set_playlists_model()
+##        self.gui.show_playlists_data()
+##            
+##    def get_playlist(self, link):
+##        gobject.idle_add(self.gui.on_playlists_pre_execute)
+##        try:
+##            response = urllib2.urlopen(link)
+##            json = response.read()
+##            gobject.idle_add(self.playlists_parser, json)
+##        except Exception as ex:
+##            print ex
+##            gobject.idle_add(self.gui.show_center_error, "playlists_error")
+##                
+##    def run(self):
+##        headers = {'Referer': self.referer}
+##        try:
+##            req = urllib2.Request(self.jsUrl, None, headers)
+##            response = urllib2.urlopen(req)
+##            js = response.read()
+##                
+##            play_item = PlayItem(js.decode('cp1251'))
+##            if play_item.comment != "":
+##                if len(play_item.comment) == 1:
+##                    play_item.comment = self.trailersTitle
+##                flv_size = get_link_size(play_item.file)
+##                mp4_size = get_link_size(play_item.download)
+##                gobject.idle_add(self.run_play_item_dialog, 
+##                                 play_item, 
+##                                 flv_size, 
+##                                 mp4_size)
+##            else:
+##                playlist_link = self.playlist_link_parser(js)
+##                self.get_playlist(playlist_link)
+##            
+##        except Exception as ex:
+##            print ex
+##            gobject.idle_add(show_error_dialog, self.gui)
             
 class PlayItemDialog:
     def __init__(self, gui, play_item, flv_size, mp4_size):
